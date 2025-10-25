@@ -12,4 +12,41 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model Machine {
+  // Menggunakan String untuk UUID (seperti yang digunakan Supabase dengan gen_random_uuid())
+  id            String    @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  name          String? // Menggunakan Serial name mesin
+  type          String
+  
+  // Relasi ke model SensorData
+  sensorReadings SensorData[]
+
+  @@map("machines") // Nama tabel Supabase
+}
+
+model SensorData {
+  // SERIAL PRIMARY KEY 
+  udi           Int       @id @default(autoincrement())
+
+  // Kunci Asing (Foreign Key) ke tabel Machines
+  machineId     String    @db.Uuid @map("machine_id")
+  machine       Machine   @relation(fields: [machineId], references: [id], onDelete: Restrict)
+  
+  // Tipe data time-series
+  timestamp     DateTime  @default(now()) @map("timestamp")
+  
+  // Float untuk DOUBLE PRECISION (sesuai PostgreSQL)
+  airTemp       Float     @map("air_temp")
+  processTemp   Float     @map("process_temp")
+  
+  // Integer
+  rotationalSpeed Int     @map("rotational_speed")
+  torque          Float
+  toolWear        Int     @map("tool_wear")
+
+  @@index([machineId, timestamp]) 
+  @@map("sensor_readings") // Nama tabel di database
 }
