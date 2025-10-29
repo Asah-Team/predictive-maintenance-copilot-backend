@@ -21,16 +21,28 @@
     "prisma:pull": "dotenv -e .env -- prisma db pull",
     "prisma:push": "dotenv -e .env -- prisma db push",
     "prisma:generate": "dotenv -e .env -- prisma generate",
-    "prisma:migrate": "dotenv -e .env -- prisma migrate dev"
+    "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
+    "prisma:seed": "dotenv -e .env -- ts-node prisma/seed.ts",
+    "prisma:studio": "dotenv -e .env -- prisma studio",
+    "simulate:sensors": "dotenv -e .env -- ts-node prisma/simulate-realtime.ts"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.7",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.7",
     "@nestjs/platform-express": "^11.1.7",
+    "@nestjs/platform-socket.io": "^11.1.8",
+    "@nestjs/websockets": "^11.1.8",
     "@prisma/client": "^6.18.0",
+    "@supabase/supabase-js": "^2.76.1",
+    "nestjs-zod": "^5.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

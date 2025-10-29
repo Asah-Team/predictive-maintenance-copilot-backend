@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Realtime Monitor</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .status {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-indicator.connected {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .status-indicator.disconnected {
+            background: #ef4444;
+        }
+        .readings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .reading-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .reading-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+        .reading-card.anomaly {
+            border-left: 5px solid #ef4444;
+            background: #fee;
+        }
+        .machine-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        .sensor-value {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .sensor-label {
+            font-weight: 600;
+            color: #666;
+        }
+        .sensor-data {
+            font-weight: bold;
+            color: #333;
+        }
+        .timestamp {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+        }
+        .anomaly-badge {
+            background: #ef4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .normal-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        #eventLog {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .log-entry.info {
+            background: #e0f2fe;
+        }
+        .log-entry.warning {
+            background: #fef3c7;
+        }
+        .log-entry.error {
+            background: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 Predictive Maintenance - Real-time Sensor Monitor</h1>
+        
+        <div class="status">
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span id="statusText">Connecting...</span>
+            <span style="float: right;">Total Readings: <strong id="readingCount">0</strong></span>
+        </div>
+
+        <div class="readings-grid" id="readingsGrid">
+            <!-- Readings will be displayed here -->
+        </div>
+
+        <div id="eventLog">
+            <h3>Event Log</h3>
+            <div id="logEntries"></div>
+        </div>
+    </div>
+
+    <script>
+        // Connect to WebSocket
+        const socket = io('http://localhost:3000/sensors', {
+            transports: ['websocket', 'polling']
+        });
+
+        let readingCount = 0;
+        const machineReadings = new Map();
+
+        // Connection events
+        socket.on('connect', () => {
+            updateStatus(true, 'Connected to sensor feed');
+            addLog('info', 'Connected to WebSocket server');
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus(false, 'Disconnected');
+            addLog('error', 'Disconnected from WebSocket server');
+        });
+
+        socket.on('connection', (data) => {
+            addLog('info', `Connection confirmed: ${data.message}`);
+        });
+
+        // Sensor reading event
+        socket.on('sensor-reading', (payload) => {
+            readingCount++;
+            document.getElementById('readingCount').textContent = readingCount;
+
+            const reading = payload.data;
+            updateReading(reading, false);
+            addLog('info', `New reading from machine ${reading.machine_id}`);
+        });
+
+        // Anomaly event
+        socket.on('sensor-anomaly', (payload) => {
+            const reading = payload.data;
+            updateReading(reading, true);
+            addLog('warning', `⚠️ ANOMALY detected on machine ${reading.machine_id}`);
+        });
+
+        function updateStatus(connected, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                indicator.classList.add('connected');
+                indicator.classList.remove('disconnected');
+            } else {
+                indicator.classList.remove('connected');
+                indicator.classList.add('disconnected');
+            }
+            
+            statusText.textContent = text;
+        }
+
+        function updateReading(reading, isAnomaly) {
+            const machineId = reading.machine_id;
+            
+            if (!machineReadings.has(machineId)) {
+                machineReadings.set(machineId, {
+                    count: 0
+                });
+            }
+            
+            const machineData = machineReadings.get(machineId);
+            machineData.count++;
+
+            const grid = document.getElementById('readingsGrid');
+            let card = document.getElementById(`card-${machineId}`);
+
+            if (!card) {
+                card = document.createElement('div');
+                card.id = `card-${machineId}`;
+                card.className = 'reading-card';
+                grid.appendChild(card);
+            }
+
+            if (isAnomaly) {
+                card.classList.add('anomaly');
+            } else {
+                card.classList.remove('anomaly');
+            }
+
+            const timestamp = new Date(reading.timestamp).toLocaleTimeString();
+            
+            card.innerHTML = `
+                <div class="machine-name">Machine: ${machineId.substring(0, 8)}...</div>
+                <div class="sensor-value">
+                    <span class="sensor-label">Air Temperature:</span>
+                    <span class="sensor-data">${reading.air_temp?.toFixed(2) || 'N/A'} K</span>
+                </div>
+                <div class="sensor-value">
+                    <span class="sensor-label">Process Temperature:</span>
+                    <span class="sensor-data">${reading.process_temp?.toFixed(2) || 'N/A'} K</span>
+                </div>
+                <div class="sensor-value">
+                    <span class="sensor-label">Rotational Speed:</span>
+                    <span class="sensor-data">${reading.rotational_speed || 'N/A'} RPM</span>
+                </div>
+                <div class="sensor-value">
+                    <span class="sensor-label">Torque:</span>
+                    <span class="sensor-data">${reading.torque?.toFixed(2) || 'N/A'} Nm</span>
+                </div>
+                <div class="sensor-value">
+                    <span class="sensor-label">Tool Wear:</span>
+                    <span class="sensor-data">${reading.tool_wear || 'N/A'} min</span>
+                </div>
+                ${isAnomaly ? '<span class="anomaly-badge">⚠️ ANOMALY</span>' : '<span class="normal-badge">✓ Normal</span>'}
+                <div class="timestamp">Last updated: ${timestamp} | Total: ${machineData.count} readings</div>
+            `;
+        }
+
+        function addLog(type, message) {
+            const logEntries = document.getElementById('logEntries');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logEntries.insertBefore(entry, logEntries.firstChild);
+
+            // Keep only last 50 entries
+            while (logEntries.children.length > 50) {
+                logEntries.removeChild(logEntries.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
