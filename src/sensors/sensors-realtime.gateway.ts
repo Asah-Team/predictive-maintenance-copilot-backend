@@ -20,7 +20,7 @@ export class SensorsRealtimeGateway
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('SensorsRealtimeGateway');
 
-  afterInit(server: Server) {
+  afterInit(_server: Server) {
     this.logger.log('WebSocket Gateway initialized for sensors');
   }
 

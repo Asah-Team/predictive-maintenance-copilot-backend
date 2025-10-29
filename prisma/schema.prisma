@@ -11,14 +11,13 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL")
 }
 
 model Machine {
   // Menggunakan String untuk UUID (seperti yang digunakan Supabase dengan gen_random_uuid())
   id            String    @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
-  name          String? // Menggunakan Serial name mesin
-  type          String
+  productId     String    @unique @map("product_id") // Product ID dari dataset (M23839, L56160, H38406)
+  type          String    // Type: L (Low), M (Medium), H (High)
   
   // Relasi ke model SensorData
   sensorReadings SensorData[]

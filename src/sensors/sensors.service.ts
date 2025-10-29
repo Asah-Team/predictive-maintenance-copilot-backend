@@ -1,14 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MachinesService } from '../machines/machines.service';
 import { CreateSensorReadingDto } from './dto/create-sensor-reading.dto';
 
 @Injectable()
 export class SensorsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private machinesService: MachinesService,
+  ) {}
 
   async create(createSensorReadingDto: CreateSensorReadingDto) {
+    // Find machine by productId
+    const machine = await this.prisma.machine.findUnique({
+      where: { productId: createSensorReadingDto.productId },
+    });
+
+    if (!machine) {
+      throw new Error(
+        `Machine with Product ID ${createSensorReadingDto.productId} not found`,
+      );
+    }
+
     const data: any = {
-      machineId: createSensorReadingDto.machineId,
+      machineId: machine.id,
       airTemp: createSensorReadingDto.airTemp,
       processTemp: createSensorReadingDto.processTemp,
       rotationalSpeed: createSensorReadingDto.rotationalSpeed,
@@ -29,6 +44,11 @@ export class SensorsService {
   }
 
   async findAll(machineId?: string, limit = 100) {
+    // Validate machine exists if machineId filter is provided
+    if (machineId) {
+      await this.machinesService.validateMachineExists(machineId);
+    }
+
     return this.prisma.sensorData.findMany({
       where: machineId ? { machineId } : {},
       include: {
@@ -42,6 +62,9 @@ export class SensorsService {
   }
 
   async findLatest(machineId: string) {
+    // Validate machine exists before querying latest reading
+    await this.machinesService.validateMachineExists(machineId);
+
     return this.prisma.sensorData.findFirst({
       where: { machineId },
       orderBy: {
@@ -54,6 +77,9 @@ export class SensorsService {
   }
 
   async getStatistics(machineId: string, hours = 24) {
+    // Validate machine exists before calculating statistics
+    await this.machinesService.validateMachineExists(machineId);
+
     const since = new Date();
     since.setHours(since.getHours() - hours);
 

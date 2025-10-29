@@ -9,6 +9,7 @@ import {
   createClient,
   SupabaseClient,
   RealtimeChannel,
+  REALTIME_SUBSCRIBE_STATES,
 } from '@supabase/supabase-js';
 import { SensorsRealtimeGateway } from './sensors-realtime.gateway';
 import { DEFAULT_THRESHOLDS } from './interfaces/sensor-reading.interface';
@@ -65,7 +66,7 @@ export class SupabaseRealtimeService implements OnModuleInit, OnModuleDestroy {
         },
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
           this.logger.log('✅ Supabase Realtime subscription active');
         } else {
           this.logger.warn(`Subscription status: ${status}`);

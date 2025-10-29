@@ -13,12 +13,14 @@ async function simulateRealtimeData() {
   const machines = await prisma.machine.findMany();
 
   if (machines.length === 0) {
-    console.error('❌ No machines found. Please run seed first: npm run prisma:seed');
+    console.error(
+      '❌ No machines found. Please run seed first: npm run prisma:seed',
+    );
     process.exit(1);
   }
 
   console.log(`📡 Found ${machines.length} machines:`);
-  machines.forEach((m) => console.log(`   - ${m.name} (${m.type})`));
+  machines.forEach((m) => console.log(`   - ${m.productId} (Type: ${m.type})`));
   console.log('\n⏱️  Generating sensor readings every 5 seconds...\n');
 
   let readingCount = 0;
@@ -27,9 +29,11 @@ async function simulateRealtimeData() {
   setInterval(async () => {
     try {
       for (const machine of machines) {
-        // Generate realistic sensor data based on machine type
-        const baseTemp = machine.type === 'High' ? 305 : machine.type === 'Medium' ? 300 : 298;
-        const baseSpeed = machine.type === 'High' ? 2000 : machine.type === 'Medium' ? 1500 : 1000;
+        // Generate realistic sensor data based on machine type (H/M/L)
+        const baseTemp =
+          machine.type === 'H' ? 305 : machine.type === 'M' ? 300 : 298;
+        const baseSpeed =
+          machine.type === 'H' ? 2000 : machine.type === 'M' ? 1500 : 1000;
 
         // Add some randomness and occasional anomalies
         const isAnomaly = Math.random() < 0.1; // 10% chance of anomaly
@@ -57,7 +61,7 @@ async function simulateRealtimeData() {
 
         const status = isAnomaly ? '⚠️  ANOMALY' : '✅ Normal';
         console.log(
-          `${status} | ${machine.name} | Temp: ${reading.airTemp.toFixed(1)}K | ` +
+          `${status} | ${machine.productId} (${machine.type}) | Temp: ${reading.airTemp.toFixed(1)}K | ` +
             `Speed: ${reading.rotationalSpeed} RPM | Torque: ${reading.torque.toFixed(1)} Nm`,
         );
       }

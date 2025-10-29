@@ -1,98 +1,675 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Predictive Maintenance Copilot - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API untuk sistem Predictive Maintenance dengan realtime sensor monitoring menggunakan NestJS, Prisma, PostgreSQL (Supabase), dan WebSocket.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Table of Contents
 
-## Description
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Database Setup](#database-setup)
+- [Running the Application](#running-the-application)
+- [API Documentation](#api-documentation)
+  - [Machines API](#machines-api)
+  - [Sensor Readings API](#sensor-readings-api)
+- [Realtime Features](#realtime-features)
+- [Testing](#testing)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## ✨ Features
 
-```bash
-$ npm install
-```
+- 🏭 **Machine Management** - CRUD operations untuk mesin dengan Product ID dari dataset
+- 📊 **Sensor Data Collection** - Collect dan store sensor readings (temperature, speed, torque, tool wear)
+- 🔄 **Realtime Updates** - WebSocket untuk live sensor data streaming
+- 📈 **Statistics & Analytics** - Aggregated statistics untuk sensor readings
+- 🔍 **Machine Validation** - Automatic validation of machine existence sebelum sensor operations
+- 🗄️ **PostgreSQL Database** - Menggunakan Supabase dengan connection pooling
+- 🎯 **Type Safety** - Full TypeScript dengan Zod validation
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 🛠️ Tech Stack
 
-# watch mode
-$ npm run start:dev
+- **Framework**: NestJS 11.1.7
+- **Language**: TypeScript 5.1.3
+- **Database**: PostgreSQL (Supabase)
+- **ORM**: Prisma 6.18.0
+- **Validation**: Zod + nestjs-zod
+- **Realtime**: Socket.io + Supabase Realtime
+- **Testing**: Jest
 
-# production mode
-$ npm run start:prod
-```
+---
 
-## Run tests
+## 📦 Prerequisites
 
-```bash
-# unit tests
-$ npm run test
+- Node.js >= 18.x
+- npm atau yarn
+- PostgreSQL database (atau akun Supabase)
+- Git
 
-# e2e tests
-$ npm run test:e2e
+---
 
-# test coverage
-$ npm run test:cov
-```
+## 🚀 Installation
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 1. Clone Repository
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+git clone https://github.com/papermintx/predictive-maintenance-copilot-backend.git
+cd predictive-maintenance-copilot-backend
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 2. Install Dependencies
 
-## Resources
+```bash
+npm install
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 3. Setup Environment Variables
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Buat file `.env` di root directory:
 
-## Support
+```env
+# Database Connection (Direct - untuk migrations)
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE"
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Database Connection (Pooled - untuk aplikasi)
+DATABASE_URL_POOLED="postgresql://USER:PASSWORD@HOST:6543/DATABASE?pgbouncer=true"
 
-## Stay in touch
+# Application
+PORT=3000
+NODE_ENV=development
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Supabase Configuration (untuk realtime features)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
 
-## License
+**Supabase Connection Strings:**
+- Port `5432` = Direct connection (untuk migrations)
+- Port `6543` = Pooled connection dengan PgBouncer (untuk aplikasi)
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 🗄️ Database Setup
+
+### 1. Generate Prisma Client
+
+```bash
+npm run prisma:generate
+```
+
+### 2. Run Database Migrations
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### 3. Seed Database
+
+Populate database dengan initial data (3 machines + 300 sensor readings):
+
+```bash
+npm run prisma:seed
+```
+
+**Seeded Machines:**
+- `M23839` (Type: M - Medium)
+- `L56160` (Type: L - Low)
+- `H38406` (Type: H - High)
+
+### 4. View Database (Optional)
+
+```bash
+npx prisma studio
+```
+
+---
+
+## 🏃 Running the Application
+
+### Development Mode
+
+```bash
+npm run start:dev
+```
+
+Server akan berjalan di: `http://localhost:3000`
+
+### Production Mode
+
+```bash
+npm run build
+npm run start:prod
+```
+
+### Simulate Realtime Sensor Data
+
+Untuk testing realtime features, jalankan simulator di terminal terpisah:
+
+```bash
+npm run simulate:sensors
+```
+
+Ini akan generate sensor readings setiap 5 detik untuk semua machines.
+
+---
+
+## 📚 API Documentation
+
+Base URL: `http://localhost:3000`
+
+### Machines API
+
+#### 1. Create Machine
+
+**POST** `/machines`
+
+Membuat machine baru berdasarkan dataset predictive maintenance.
+
+**Request Body:**
+```json
+{
+  "productId": "M24000",
+  "type": "M"
+}
+```
+
+**Parameters:**
+- `productId` (string, required): Product ID dari dataset (contoh: M23839, L56160, H38406)
+- `type` (enum, required): Machine type - `"L"` (Low), `"M"` (Medium), atau `"H"` (High)
+
+**Response:** `201 Created`
+```json
+{
+  "id": "uuid-v4",
+  "productId": "M24000",
+  "type": "M"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Validation error atau productId sudah ada
+- `500 Internal Server Error` - Database error
+
+---
+
+#### 2. Get All Machines
+
+**GET** `/machines?includeStats=true`
+
+Mendapatkan daftar semua machines dengan optional statistics.
+
+**Query Parameters:**
+- `includeStats` (boolean, optional): Include sensor reading count. Default: `false`
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "uuid-1",
+    "productId": "M23839",
+    "type": "M",
+    "_count": {
+      "sensorReadings": 150
+    }
+  },
+  {
+    "id": "uuid-2",
+    "productId": "L56160",
+    "type": "L",
+    "_count": {
+      "sensorReadings": 120
+    }
+  }
+]
+```
+
+---
+
+#### 3. Get Single Machine
+
+**GET** `/machines/:id`
+
+Mendapatkan detail machine berdasarkan UUID.
+
+**URL Parameters:**
+- `id` (uuid, required): Machine UUID
+
+**Response:** `200 OK`
+```json
+{
+  "id": "uuid-1",
+  "productId": "M23839",
+  "type": "M"
+}
+```
+
+**Error Responses:**
+- `404 Not Found` - Machine tidak ditemukan
+
+---
+
+#### 4. Get Machine Statistics
+
+**GET** `/machines/:id/stats`
+
+Mendapatkan machine dengan sensor reading statistics dan latest readings.
+
+**URL Parameters:**
+- `id` (uuid, required): Machine UUID
+
+**Response:** `200 OK`
+```json
+{
+  "id": "uuid-1",
+  "productId": "M23839",
+  "type": "M",
+  "_count": {
+    "sensorReadings": 150
+  },
+  "sensorReadings": [
+    {
+      "udi": 300,
+      "machineId": "uuid-1",
+      "timestamp": "2024-01-29T10:30:00.000Z",
+      "airTemp": 298.5,
+      "processTemp": 308.2,
+      "rotationalSpeed": 2850,
+      "torque": 42.5,
+      "toolWear": 150
+    }
+  ]
+}
+```
+
+---
+
+#### 5. Delete Machine
+
+**DELETE** `/machines/:id`
+
+Menghapus machine dari database.
+
+**URL Parameters:**
+- `id` (uuid, required): Machine UUID
+
+**Response:** `200 OK`
+```json
+{
+  "id": "uuid-1",
+  "productId": "M23839",
+  "type": "M"
+}
+```
+
+**Error Responses:**
+- `404 Not Found` - Machine tidak ditemukan
+- `400 Bad Request` - Machine memiliki sensor readings (foreign key constraint)
+
+---
+
+### Sensor Readings API
+
+#### 1. Create Sensor Reading
+
+**POST** `/sensors/readings`
+
+Membuat sensor reading baru. Machine akan dicari berdasarkan `productId`.
+
+**Request Body:**
+```json
+{
+  "productId": "M23839",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 2850,
+  "torque": 42.5,
+  "toolWear": 150,
+  "timestamp": "2024-01-29T10:30:00.000Z"
+}
+```
+
+**Parameters:**
+- `productId` (string, required): Product ID dari machine
+- `airTemp` (number, required): Air temperature dalam Kelvin (0-500)
+- `processTemp` (number, required): Process temperature dalam Kelvin (0-500)
+- `rotationalSpeed` (integer, required): Rotational speed dalam RPM (0-10000)
+- `torque` (number, required): Torque dalam Nm (0-200)
+- `toolWear` (integer, required): Tool wear dalam minutes (0-1000)
+- `timestamp` (ISO 8601, optional): Timestamp reading. Default: `now()`
+
+**Response:** `201 Created`
+```json
+{
+  "udi": 301,
+  "machineId": "uuid-1",
+  "timestamp": "2024-01-29T10:30:00.000Z",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 2850,
+  "torque": 42.5,
+  "toolWear": 150,
+  "machine": {
+    "id": "uuid-1",
+    "productId": "M23839",
+    "type": "M"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Validation error
+- `404 Not Found` - Machine dengan productId tidak ditemukan
+
+---
+
+#### 2. Get Sensor Readings
+
+**GET** `/sensors/readings?machineId=uuid&limit=100`
+
+Mendapatkan sensor readings dengan optional filtering.
+
+**Query Parameters:**
+- `machineId` (uuid, optional): Filter by machine UUID
+- `limit` (integer, optional): Max results. Default: `100`
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "udi": 301,
+    "machineId": "uuid-1",
+    "timestamp": "2024-01-29T10:30:00.000Z",
+    "airTemp": 298.5,
+    "processTemp": 308.2,
+    "rotationalSpeed": 2850,
+    "torque": 42.5,
+    "toolWear": 150,
+    "machine": {
+      "id": "uuid-1",
+      "productId": "M23839",
+      "type": "M"
+    }
+  }
+]
+```
+
+**Error Responses:**
+- `404 Not Found` - Machine tidak ditemukan (jika machineId provided)
+
+---
+
+#### 3. Get Latest Reading
+
+**GET** `/sensors/readings/latest?machineId=uuid`
+
+Mendapatkan sensor reading terbaru untuk machine tertentu.
+
+**Query Parameters:**
+- `machineId` (uuid, required): Machine UUID
+
+**Response:** `200 OK`
+```json
+{
+  "udi": 301,
+  "machineId": "uuid-1",
+  "timestamp": "2024-01-29T10:30:00.000Z",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 2850,
+  "torque": 42.5,
+  "toolWear": 150,
+  "machine": {
+    "id": "uuid-1",
+    "productId": "M23839",
+    "type": "M"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - machineId required
+- `404 Not Found` - Machine tidak ditemukan atau belum ada readings
+
+---
+
+#### 4. Get Statistics
+
+**GET** `/sensors/statistics?machineId=uuid&hours=24`
+
+Mendapatkan aggregated statistics untuk sensor readings.
+
+**Query Parameters:**
+- `machineId` (uuid, required): Machine UUID
+- `hours` (integer, optional): Time window in hours. Default: `24`
+
+**Response:** `200 OK`
+```json
+{
+  "count": 48,
+  "airTemp": {
+    "min": 296.5,
+    "max": 301.2,
+    "avg": 298.75
+  },
+  "processTemp": {
+    "min": 306.5,
+    "max": 311.2,
+    "avg": 308.75
+  },
+  "rotationalSpeed": {
+    "min": 2750,
+    "max": 2950,
+    "avg": 2850
+  },
+  "torque": {
+    "min": 35.2,
+    "max": 48.7,
+    "avg": 42.3
+  },
+  "toolWear": {
+    "min": 100,
+    "max": 200,
+    "avg": 150
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - machineId required
+- `404 Not Found` - Machine tidak ditemukan
+- `404 Not Found` - No readings in time window
+
+---
+
+## 🔌 Realtime Features
+
+### WebSocket Connection
+
+Connect ke WebSocket untuk realtime sensor updates:
+
+```javascript
+const socket = io('http://localhost:3000/sensors');
+
+// Listen for new sensor readings
+socket.on('sensorReading', (data) => {
+  console.log('New reading:', data);
+});
+
+// Connection events
+socket.on('connect', () => {
+  console.log('Connected to sensor stream');
+});
+```
+
+### Supabase Realtime
+
+Server juga subscribe ke Supabase Realtime untuk database changes:
+
+```typescript
+// Automatic subscription to sensor_readings table
+// Broadcasts INSERT events via WebSocket
+```
+
+### Test Realtime
+
+1. Start server: `npm run start:dev`
+2. Open `test/websocket-client.html` di browser
+3. Run simulator: `npm run simulate:sensors`
+4. Watch live updates di browser
+
+---
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+### Manual Testing dengan cURL
+
+**Create Machine:**
+```bash
+curl -X POST http://localhost:3000/machines \
+  -H "Content-Type: application/json" \
+  -d '{"productId":"M24000","type":"M"}'
+```
+
+**Create Sensor Reading:**
+```bash
+curl -X POST http://localhost:3000/sensors/readings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId":"M23839",
+    "airTemp":298.5,
+    "processTemp":308.2,
+    "rotationalSpeed":2850,
+    "torque":42.5,
+    "toolWear":150
+  }'
+```
+
+**Get Statistics:**
+```bash
+curl "http://localhost:3000/sensors/statistics?machineId=uuid-here&hours=24"
+```
+
+---
+
+## 📁 Project Structure
+
+```
+predictive-maintenance-copilot-backend/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   ├── seed.ts                # Database seeding
+│   ├── simulate-realtime.ts   # Sensor data simulator
+│   └── migrations/            # Database migrations
+├── src/
+│   ├── main.ts               # Application entry point
+│   ├── app.module.ts         # Root module
+│   ├── machines/             # Machines module
+│   │   ├── dto/
+│   │   ├── entities/
+│   │   ├── machines.controller.ts
+│   │   ├── machines.service.ts
+│   │   └── machines.module.ts
+│   ├── sensors/              # Sensors module
+│   │   ├── dto/
+│   │   ├── interfaces/
+│   │   ├── sensors.controller.ts
+│   │   ├── sensors.service.ts
+│   │   ├── sensors-realtime.gateway.ts
+│   │   ├── supabase-realtime.service.ts
+│   │   └── sensors.module.ts
+│   └── prisma/               # Prisma module
+│       ├── prisma.service.ts
+│       └── prisma.module.ts
+├── test/                     # E2E tests
+├── .env                      # Environment variables
+├── package.json
+└── README.md
+```
+
+---
+
+## 🔧 Database Schema
+
+### Machine Table
+
+```prisma
+model Machine {
+  id             String         @id @default(dbgenerated("gen_random_uuid()"))
+  productId      String         @unique
+  type           String         // L, M, H
+  sensorReadings SensorData[]
+  
+  @@map("machines")
+}
+```
+
+### SensorData Table
+
+```prisma
+model SensorData {
+  udi             Int       @id @default(autoincrement())
+  machineId       String    
+  machine         Machine   @relation(fields: [machineId], references: [id])
+  timestamp       DateTime  @default(now())
+  airTemp         Float
+  processTemp     Float
+  rotationalSpeed Int
+  torque          Float
+  toolWear        Int
+  
+  @@index([machineId, timestamp])
+  @@map("sensor_readings")
+}
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the UNLICENSED License.
+
+---
+
+## 👤 Author
+
+**papermintx**
+- GitHub: [@papermintx](https://github.com/papermintx)
+
+---
+
+## 🙏 Acknowledgments
+
+- NestJS Framework
+- Prisma ORM
+- Supabase
+- Dataset: [Predictive Maintenance Dataset](https://www.kaggle.com/datasets/stephanmatzka/predictive-maintenance-dataset-ai4i-2020)
+
+---
+
+**Happy Coding! 🚀**

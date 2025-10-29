@@ -10,25 +10,25 @@ async function main() {
   await prisma.sensorData.deleteMany({});
   await prisma.machine.deleteMany({});
 
-  // Create machines
+  // Create machines based on dataset
   console.log('🏭 Creating machines...');
   const machines = await Promise.all([
     prisma.machine.create({
       data: {
-        name: 'CNC-001',
-        type: 'High',
+        productId: 'M23839',
+        type: 'M',
       },
     }),
     prisma.machine.create({
       data: {
-        name: 'CNC-002',
-        type: 'Medium',
+        productId: 'L56160',
+        type: 'L',
       },
     }),
     prisma.machine.create({
       data: {
-        name: 'CNC-003',
-        type: 'Low',
+        productId: 'H38406',
+        type: 'H',
       },
     }),
   ]);
@@ -37,19 +37,20 @@ async function main() {
 
   // Create sensor readings for each machine
   console.log('📊 Creating sensor readings...');
-  
+
   const sensorReadings: any[] = [];
-  
+
   for (const machine of machines) {
     // Create 100 historical readings per machine
     for (let i = 0; i < 100; i++) {
       const timestamp = new Date();
       timestamp.setMinutes(timestamp.getMinutes() - (100 - i) * 5); // 5 minutes apart
 
-      // Generate realistic sensor data based on machine type
-      const baseTemp = machine.type === 'High' ? 305 : machine.type === 'Medium' ? 300 : 298;
-      const baseSpeed = machine.type === 'High' ? 2000 : machine.type === 'Medium' ? 1500 : 1000;
-      
+      // Generate realistic sensor data based on machine type (H/M/L)
+      const baseTemp =
+        machine.type === 'H' ? 305 : machine.type === 'M' ? 300 : 298;
+      const baseSpeed =
+        machine.type === 'H' ? 2000 : machine.type === 'M' ? 1500 : 1000;
       sensorReadings.push({
         machineId: machine.id,
         timestamp,
@@ -69,7 +70,9 @@ async function main() {
     await prisma.sensorData.createMany({
       data: batch,
     });
-    console.log(`📈 Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(sensorReadings.length / batchSize)}`);
+    console.log(
+      `📈 Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(sensorReadings.length / batchSize)}`,
+    );
   }
 
   console.log(`✅ Created ${sensorReadings.length} sensor readings`);
@@ -77,7 +80,9 @@ async function main() {
   // Display summary
   console.log('\n📋 Seeding Summary:');
   machines.forEach((machine) => {
-    console.log(`  - ${machine.name} (${machine.type}): ${machine.id}`);
+    console.log(
+      `  - ${machine.productId} (Type: ${machine.type}): ${machine.id}`,
+    );
   });
 
   console.log('\n✨ Database seeding completed successfully!');
