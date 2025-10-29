@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { SensorsService } from './sensors.service';
 import { CreateSensorReadingDto } from './dto/create-sensor-reading.dto';
 

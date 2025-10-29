@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '../generated/prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -38,7 +38,7 @@ async function main() {
   // Create sensor readings for each machine
   console.log('📊 Creating sensor readings...');
   
-  const sensorReadings = [];
+  const sensorReadings: any[] = [];
   
   for (const machine of machines) {
     // Create 100 historical readings per machine

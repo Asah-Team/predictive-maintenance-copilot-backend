@@ -26,7 +26,7 @@ export class SensorsRealtimeGateway
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
-    
+
     // Send welcome message
     client.emit('connection', {
       message: 'Connected to sensor realtime feed',

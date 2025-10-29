@@ -23,6 +23,10 @@ export const CreateSensorReadingSchema = z.object({
   timestamp: z.string().datetime().optional(),
 });
 
-export class CreateSensorReadingDto extends createZodDto(CreateSensorReadingSchema) {}
+export class CreateSensorReadingDto extends createZodDto(
+  CreateSensorReadingSchema,
+) {}
 
-export type CreateSensorReadingInput = z.infer<typeof CreateSensorReadingSchema>;
+export type CreateSensorReadingInput = z.infer<
+  typeof CreateSensorReadingSchema
+>;

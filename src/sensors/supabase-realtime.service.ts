@@ -91,25 +91,39 @@ export class SupabaseRealtimeService implements OnModuleInit, OnModuleDestroy {
     const anomalies: string[] = [];
 
     if (reading.air_temp < DEFAULT_THRESHOLDS.airTempMin) {
-      anomalies.push(`Air temperature too low: ${reading.air_temp}K (min: ${DEFAULT_THRESHOLDS.airTempMin}K)`);
+      anomalies.push(
+        `Air temperature too low: ${reading.air_temp}K (min: ${DEFAULT_THRESHOLDS.airTempMin}K)`,
+      );
     }
     if (reading.air_temp > DEFAULT_THRESHOLDS.airTempMax) {
-      anomalies.push(`Air temperature too high: ${reading.air_temp}K (max: ${DEFAULT_THRESHOLDS.airTempMax}K)`);
+      anomalies.push(
+        `Air temperature too high: ${reading.air_temp}K (max: ${DEFAULT_THRESHOLDS.airTempMax}K)`,
+      );
     }
     if (reading.process_temp > DEFAULT_THRESHOLDS.processTempMax) {
-      anomalies.push(`Process temperature too high: ${reading.process_temp}K (max: ${DEFAULT_THRESHOLDS.processTempMax}K)`);
+      anomalies.push(
+        `Process temperature too high: ${reading.process_temp}K (max: ${DEFAULT_THRESHOLDS.processTempMax}K)`,
+      );
     }
     if (reading.rotational_speed > DEFAULT_THRESHOLDS.rotationalSpeedMax) {
-      anomalies.push(`Rotational speed too high: ${reading.rotational_speed} RPM (max: ${DEFAULT_THRESHOLDS.rotationalSpeedMax} RPM)`);
+      anomalies.push(
+        `Rotational speed too high: ${reading.rotational_speed} RPM (max: ${DEFAULT_THRESHOLDS.rotationalSpeedMax} RPM)`,
+      );
     }
     if (reading.tool_wear > DEFAULT_THRESHOLDS.toolWearMax) {
-      anomalies.push(`Tool wear critical: ${reading.tool_wear} min (max: ${DEFAULT_THRESHOLDS.toolWearMax} min)`);
+      anomalies.push(
+        `Tool wear critical: ${reading.tool_wear} min (max: ${DEFAULT_THRESHOLDS.toolWearMax} min)`,
+      );
     }
     if (reading.torque < DEFAULT_THRESHOLDS.torqueMin) {
-      anomalies.push(`Torque too low: ${reading.torque} Nm (min: ${DEFAULT_THRESHOLDS.torqueMin} Nm)`);
+      anomalies.push(
+        `Torque too low: ${reading.torque} Nm (min: ${DEFAULT_THRESHOLDS.torqueMin} Nm)`,
+      );
     }
     if (reading.torque > DEFAULT_THRESHOLDS.torqueMax) {
-      anomalies.push(`Torque too high: ${reading.torque} Nm (max: ${DEFAULT_THRESHOLDS.torqueMax} Nm)`);
+      anomalies.push(
+        `Torque too high: ${reading.torque} Nm (max: ${DEFAULT_THRESHOLDS.torqueMax} Nm)`,
+      );
     }
 
     return anomalies;
