@@ -26,9 +26,6 @@
     "prisma:studio": "dotenv -e .env -- prisma studio",
     "simulate:sensors": "dotenv -e .env -- tsx prisma/simulate-realtime.ts"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@nestjs/common": "^11.1.7",
     "@nestjs/config": "^4.0.2",
