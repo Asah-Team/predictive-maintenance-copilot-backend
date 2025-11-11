@@ -1,54 +1,139 @@
-## 📚 API Documentation## Resources
+# � Predictive Maintenance API
 
+Backend API untuk sistem Predictive Maintenance menggunakan NestJS, PostgreSQL, dan Supabase Auth.
 
+## 📋 Table of Contents
 
-### Base URLCheck out a few resources that may come in handy when working with NestJS:
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [API Documentation](#-api-documentation)
+- [Testing](#-testing-dengan-postman)
+- [Project Structure](#-project-structure)
+- [Scripts](#-scripts)
 
+---
+
+## ✨ Features
+
+- ✅ Authentication dengan Supabase (Sign Up, Sign In, Sign Out)
+- ✅ Email Verification
+- ✅ JWT Token & Refresh Token
+- ✅ Session Management (token invalid setelah logout)
+- ✅ Role-Based Access Control
+- ✅ Input Validation dengan Zod
+- ✅ PostgreSQL dengan Prisma ORM
+- ✅ RESTful API Design
+
+---
+
+## 🛠 Tech Stack
+
+- **Framework:** NestJS 11.x
+- **Database:** PostgreSQL (Supabase)
+- **ORM:** Prisma 6.x
+- **Authentication:** Supabase Auth + Passport JWT
+- **Validation:** Zod + nestjs-zod
+- **Language:** TypeScript
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm atau yarn
+- PostgreSQL database (Supabase account)
+
+### Installation
+
+1. **Clone repository**
+```bash
+git clone <repository-url>
+cd predictive-maintenance-copilot-backend
 ```
 
-http://localhost:3000- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-```- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+3. **Setup environment variables**
 
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+Copy `.env.example` ke `.env` dan isi:
 
-### Authentication Endpoints- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+```env
+# Database
+DATABASE_URL="postgresql://user:password@host:5432/database?pgbouncer=true"
+DIRECT_URL="postgresql://user:password@host:5432/database"
 
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+# Supabase
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
-| Endpoint | Method | Auth | Description |- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+# JWT (optional - auto-generated if empty)
+JWT_SECRET="your-jwt-secret"
 
-|----------|--------|------|-------------|- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+# App
+PORT=3000
+NODE_ENV=development
+```
 
-| `/auth/signup` | POST | ❌ | Daftar user baru |- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+4. **Setup database**
+```bash
+# Generate Prisma Client
+npm run prisma:generate
 
+# Push schema ke database
+npm run prisma:push
+
+# (Optional) Seed sample data
+npm run seed
+```
+
+5. **Run aplikasi**
+```bash
+# Development mode dengan hot reload
+npm run start:dev
+
+# Production mode
+npm run start:prod
+```
+
+Server akan running di `http://localhost:3000`
+
+---
+
+## 📚 API Documentation
+
+### Base URL
+
+```
+Development: http://localhost:3000
+Production: https://your-domain.com
+```
+
+### Authentication Endpoints
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/auth/signup` | POST | ❌ | Daftar user baru |
 | `/auth/signin` | POST | ❌ | Login user |
-
-| `/auth/me` | GET | ✅ | Get profile user |## Support
-
+| `/auth/me` | GET | ✅ | Get profile user |
 | `/auth/refresh` | POST | ❌ | Refresh access token |
-
-| `/auth/signout` | POST | ✅ | Logout user |Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
+| `/auth/signout` | POST | ✅ | Logout user |
 | `/auth/reset-password` | POST | ❌ | Reset password |
-
-| `/auth/verify-email` | GET | ❌ | Halaman verifikasi email |## Stay in touch
-
+| `/auth/verify-email` | GET | ❌ | Halaman verifikasi email |
+| `/auth/verify-email/callback` | POST | ❌ | Callback verifikasi email |
 | `/auth/resend-verification` | POST | ❌ | Kirim ulang email verifikasi |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-
-### Example Usage- Website - [https://nestjs.com](https://nestjs.com/)
-
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Example Usage
 
 #### 1. Sign Up (Daftar)
 
-## License
-
 ```bash
-
-POST /auth/signupNest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+POST /auth/signup
 
 Content-Type: application/json
 
@@ -183,23 +268,31 @@ Ini akan membuat:
 ## 📁 Project Structure
 
 ```
-src/
-├── auth/                 # Authentication module
-│   ├── decorators/       # Custom decorators (@Public, @Roles)
-│   ├── dto/              # Data Transfer Objects
-│   ├── guards/           # Auth guards (JWT, Roles)
-│   ├── strategies/       # Passport strategies
-│   ├── auth.controller.ts
-│   ├── auth.service.ts
-│   └── supabase.service.ts
-├── common/               # Shared modules
-│   ├── filters/          # Exception filters
-│   └── prisma/           # Prisma service
-├── machine/              # Machine module
-├── sensors/              # Sensors module
-├── user/                 # User module
-├── app.module.ts
-└── main.ts
+predictive-maintenance-copilot-backend/
+├── prisma/
+│   └── schema.prisma          # Database schema
+├── src/
+│   ├── auth/                  # Authentication module
+│   │   ├── decorators/        # @Public, @Roles decorators
+│   │   ├── dto/               # Request/Response DTOs
+│   │   ├── guards/            # JWT & Roles guards
+│   │   ├── strategies/        # Passport JWT strategy
+│   │   ├── auth.controller.ts # Auth endpoints
+│   │   ├── auth.service.ts    # Auth business logic
+│   │   └── supabase.service.ts# Supabase integration
+│   ├── common/                # Shared modules
+│   │   ├── filters/           # Exception filters
+│   │   └── prisma/            # Prisma service
+│   ├── machine/               # Machine module
+│   ├── sensors/               # Sensors module
+│   ├── user/                  # User module
+│   ├── app.module.ts          # Root module
+│   └── main.ts                # Entry point
+├── test/                      # E2E tests
+├── postman/                   # Postman collections
+├── .env                       # Environment variables
+├── package.json
+└── README.md
 ```
 
 ## 🔐 Security Features
@@ -214,37 +307,69 @@ src/
 
 ## 🐛 Troubleshooting
 
-### Error: "Invalid credentials" saat sign in
+### ❌ Error: "Invalid credentials" saat sign in
 
-**Penyebab:** Email belum diverifikasi
+**Penyebab:** Email belum diverifikasi atau password salah
 
 **Solusi:** 
-1. Cek email inbox untuk link verifikasi
-2. Klik link verifikasi
+1. Pastikan email sudah diverifikasi (cek inbox)
+2. Klik link verifikasi di email
 3. Coba login lagi
+4. Jika lupa password, gunakan `/auth/reset-password`
 
-### Error: "Session has been invalidated" saat get profile
+### ❌ Error: "Session has been invalidated"
 
 **Penyebab:** Token sudah tidak valid (setelah sign out atau expired)
 
 **Solusi:** Login ulang untuk mendapatkan token baru
 
-### Email verifikasi tidak sampai
+### 📧 Email verifikasi tidak sampai
 
 **Solusi:**
-1. Cek spam folder
+1. Cek spam/junk folder
 2. Gunakan endpoint `/auth/resend-verification` untuk kirim ulang
+3. Pastikan Supabase email service sudah configured
 
-## 📖 Documentation untuk Developer
+### 🔧 Database connection error
 
-Untuk dokumentasi lengkap tentang API endpoints, error handling, dan integration guide, lihat:
+**Solusi:**
+1. Pastikan `DATABASE_URL` dan `DIRECT_URL` sudah benar di `.env`
+2. Check koneksi ke Supabase
+3. Jalankan `npm run prisma:generate` dan `npm run prisma:push`
 
-**[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**
+---
 
-## 🤝 Support
+## 📖 Documentation
 
-Jika ada pertanyaan atau masalah, silakan buat issue di repository ini.
+### Untuk Frontend Developer
 
-## 📝 License
+Dokumentasi lengkap tentang API endpoints, error handling, dan integration guide:
 
-[MIT License](LICENSE)
+👉 **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**
+
+Berisi:
+- Complete authentication flow
+- Semua API endpoints dengan request/response format
+- Error codes dan handling
+- Common exceptions
+- Security notes
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Silakan buat issue atau pull request.
+
+---
+
+## 📞 Support
+
+Jika ada pertanyaan atau masalah:
+1. Baca [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) terlebih dahulu
+2. Test dengan Postman collection
+3. Check browser console dan network tab
+4. Buat issue dengan detail error
+
+---
+
+**Built with ❤️ using NestJS**
