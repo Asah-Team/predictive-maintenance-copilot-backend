@@ -79,6 +79,7 @@ model Machine {
   
   // Relations
   sensorReadings      SensorData[]
+  predictions         PredictionResult[]
   conversations       Conversation[]
 
   @@index([productId])
@@ -105,6 +106,28 @@ model SensorData {
   @@index([machineId, timestamp])
   @@index([timestamp])
   @@map("sensor_readings")
+}
+
+model PredictionResult {
+  id                    String    @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  machineId             String    @db.Uuid @map("machine_id")
+  timestamp             DateTime  @default(now())
+  riskScore             Float     @map("risk_score")              // 0-1 (0 = no risk, 1 = high risk)
+  failurePredicted      Boolean   @map("failure_predicted")
+  failureType           String?   @map("failure_type")            // "Heat Dissipation", "Power Failure", "Overstrain", "Tool Wear", "Random Failures"
+  anomalyDetected       Boolean   @default(false) @map("anomaly_detected")
+  predictedFailureTime  DateTime? @map("predicted_failure_time")  // Estimasi waktu failure
+  confidence            Float?                                    // ML model confidence (0-1)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  machine               Machine   @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([machineId, timestamp])
+  @@index([timestamp])
+  @@index([failurePredicted])
+  @@index([riskScore])
+  @@map("prediction_results")
 }
 
 model Conversation {
