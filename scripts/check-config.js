@@ -4,6 +4,8 @@
  * Configuration Checker for Predictive Maintenance Backend
  * 
  * This script checks if all required environment variables are set correctly.
+ * 
+ * Usage: node scripts/check-config.js
  */
 
 require('dotenv').config();
@@ -33,10 +35,8 @@ requiredEnvVars.forEach((varName) => {
     console.log(`  ❌ ${varName}: MISSING`);
     hasErrors = true;
   } else {
-    // Mask sensitive data
-    const maskedValue = value.length > 20 
-      ? value.substring(0, 20) + '...' 
-      : value;
+    // Mask ALL sensitive data - only show first 10 chars
+    const maskedValue = value.substring(0, 10) + '...';
     console.log(`  ✅ ${varName}: ${maskedValue}`);
   }
 });

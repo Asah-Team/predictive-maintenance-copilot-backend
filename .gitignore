@@ -42,6 +42,11 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Scripts with sensitive data
+scripts/test-supabase.js
+scripts/test-signup.js
+scripts/check-supabase-config.js
+
 # temp directory
 .temp
 .tmp
