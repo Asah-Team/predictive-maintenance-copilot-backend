@@ -332,6 +332,437 @@
       "description": "Authentication endpoints using Supabase"
     },
     {
+      "name": "Machines",
+      "item": [
+        {
+          "name": "Create Machine",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('machineId', jsonData.id);",
+                  "    pm.environment.set('productId', jsonData.productId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"M14860\",\n  \"type\": \"M\",\n  \"name\": \"CNC Machine 001\",\n  \"description\": \"High precision CNC machine for metal cutting\",\n  \"location\": \"Factory Floor A\",\n  \"installationDate\": \"2024-01-15T00:00:00Z\",\n  \"status\": \"operational\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/machines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines"
+              ]
+            },
+            "description": "Create new machine (requires admin or operator role)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Machines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/machines?limit=50&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "search",
+                  "value": "M14860",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "M",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "operational",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "Factory Floor A",
+                  "disabled": true
+                },
+                {
+                  "key": "includeStats",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of machines with optional filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Machine by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/machines/{{machineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines",
+                "{{machineId}}"
+              ]
+            },
+            "description": "Get machine details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Machine Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/machines/{{machineId}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines",
+                "{{machineId}}",
+                "stats"
+              ]
+            },
+            "description": "Get machine statistics including sensor readings and predictions count"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Machine",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maintenance\",\n  \"lastMaintenanceDate\": \"2025-11-12T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/machines/{{machineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines",
+                "{{machineId}}"
+              ]
+            },
+            "description": "Update machine (partial update, requires admin or operator role)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Machine",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/machines/{{machineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "machines",
+                "{{machineId}}"
+              ]
+            },
+            "description": "Delete machine (requires admin role)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Machine management endpoints"
+    },
+    {
+      "name": "Sensors",
+      "item": [
+        {
+          "name": "Create Sensor Reading",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('sensorUdi', jsonData.udi);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"machineId\": \"{{machineId}}\",\n  \"productId\": \"M14860\",\n  \"airTemp\": 298.1,\n  \"processTemp\": 308.6,\n  \"rotationalSpeed\": 1551,\n  \"torque\": 42.8,\n  \"toolWear\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sensors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors"
+              ]
+            },
+            "description": "Create single sensor reading (requires admin or operator role)"
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Create Sensor Readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"readings\": [\n    {\n      \"machineId\": \"{{machineId}}\",\n      \"productId\": \"M14860\",\n      \"airTemp\": 298.1,\n      \"processTemp\": 308.6,\n      \"rotationalSpeed\": 1551,\n      \"torque\": 42.8,\n      \"toolWear\": 0\n    },\n    {\n      \"machineId\": \"{{machineId}}\",\n      \"productId\": \"M14861\",\n      \"airTemp\": 298.2,\n      \"processTemp\": 308.7,\n      \"rotationalSpeed\": 1552,\n      \"torque\": 42.9,\n      \"toolWear\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sensors/batch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "batch"
+              ]
+            },
+            "description": "Create multiple sensor readings at once (max 100, requires admin or operator role)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Sensor Readings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors?limit=100&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "machineId",
+                  "value": "{{machineId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-11-01T00:00:00Z",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-11-12T23:59:59Z",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get sensor readings with optional filters (machineId, date range)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor Reading by UDI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/{{sensorUdi}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "{{sensorUdi}}"
+              ]
+            },
+            "description": "Get sensor reading details by UDI (unique data identifier)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor Statistics by Machine",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/statistics/{{machineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "statistics",
+                "{{machineId}}"
+              ]
+            },
+            "description": "Get sensor statistics for a machine (min, max, avg, median for last 100 readings)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Sensor Reading",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/{{sensorUdi}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "{{sensorUdi}}"
+              ]
+            },
+            "description": "Delete sensor reading (requires admin role)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Sensor readings management endpoints"
+    },
+    {
       "name": "Health Check",
       "item": [
         {
