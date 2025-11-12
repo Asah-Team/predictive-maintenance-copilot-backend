@@ -90,6 +90,401 @@ Development: http://localhost:3000
 Production: https://your-domain.com
 ```
 
+---
+
+## 🏭 Machine Management API
+
+### 1. Create Machine
+
+**Endpoint:** `POST /machines`  
+**Auth:** Required (Admin, Operator)
+
+**Request:**
+```json
+{
+  "productId": "L47181",
+  "type": "L",
+  "name": "Machine L47181",
+  "description": "Low quality variant machine",
+  "location": "Factory Floor 2",
+  "installationDate": "2023-02-06",
+  "lastMaintenanceDate": "2024-06-22",
+  "status": "operational"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": "uuid",
+  "productId": "L47181",
+  "type": "L",
+  "name": "Machine L47181",
+  "description": "Low quality variant machine",
+  "location": "Factory Floor 2",
+  "installationDate": "2023-02-06T00:00:00.000Z",
+  "lastMaintenanceDate": "2024-06-22T00:00:00.000Z",
+  "status": "operational",
+  "createdAt": "2025-11-12T00:00:00.000Z",
+  "updatedAt": "2025-11-12T00:00:00.000Z"
+}
+```
+
+---
+
+### 2. Get All Machines
+
+**Endpoint:** `GET /machines`  
+**Auth:** Required (All roles)
+
+**Query Parameters:**
+- `search` (optional) - Search by name, productId, or location
+- `type` (optional) - Filter by type: L, M, H
+- `status` (optional) - Filter by status: operational, maintenance, offline, retired
+- `location` (optional) - Filter by location
+- `includeStats` (optional) - Include sensor readings count (true/false)
+- `limit` (optional) - Results per page (default: 50)
+- `offset` (optional) - Pagination offset (default: 0)
+
+**Example:** `GET /machines?type=L&status=operational&limit=10`
+
+**Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "productId": "L47181",
+      "type": "L",
+      "name": "Machine L47181",
+      "status": "operational",
+      "_count": {
+        "sensorReadings": 150
+      }
+    }
+  ],
+  "meta": {
+    "total": 100,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  }
+}
+```
+
+---
+
+### 3. Get Machine by ID
+
+**Endpoint:** `GET /machines/:id`  
+**Auth:** Required (All roles)
+
+**Response:** `200 OK`
+```json
+{
+  "id": "uuid",
+  "productId": "L47181",
+  "type": "L",
+  "name": "Machine L47181",
+  "description": "Low quality variant machine",
+  "location": "Factory Floor 2",
+  "installationDate": "2023-02-06T00:00:00.000Z",
+  "lastMaintenanceDate": "2024-06-22T00:00:00.000Z",
+  "status": "operational",
+  "_count": {
+    "sensorReadings": 150
+  },
+  "createdAt": "2025-11-12T00:00:00.000Z",
+  "updatedAt": "2025-11-12T00:00:00.000Z"
+}
+```
+
+---
+
+### 4. Get Machine Statistics
+
+**Endpoint:** `GET /machines/:id/stats`  
+**Auth:** Required (All roles)
+
+**Response:** `200 OK`
+```json
+{
+  "machine": {
+    "id": "uuid",
+    "productId": "L47181",
+    "name": "Machine L47181",
+    "status": "operational"
+  },
+  "statistics": {
+    "sensorReadingsCount": 150,
+    "predictionsCount": 0,
+    "criticalPredictions": 0,
+    "latestPrediction": null
+  }
+}
+```
+
+---
+
+### 5. Update Machine
+
+**Endpoint:** `PATCH /machines/:id`  
+**Auth:** Required (Admin, Operator)
+
+**Request:** (All fields optional)
+```json
+{
+  "name": "Updated Machine Name",
+  "status": "maintenance",
+  "location": "Factory Floor 3",
+  "lastMaintenanceDate": "2025-11-12"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": "uuid",
+  "productId": "L47181",
+  "name": "Updated Machine Name",
+  "status": "maintenance",
+  "updatedAt": "2025-11-12T00:00:00.000Z"
+}
+```
+
+---
+
+### 6. Delete Machine
+
+**Endpoint:** `DELETE /machines/:id`  
+**Auth:** Required (Admin only)
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Machine deleted successfully"
+}
+```
+
+---
+
+## 📊 Sensors API
+
+### 1. Create Sensor Reading
+
+**Endpoint:** `POST /sensors`  
+**Auth:** Required (Admin, Operator)
+
+**Request:**
+```json
+{
+  "machineId": "uuid",
+  "productId": "L47181",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 1450,
+  "torque": 42.3,
+  "toolWear": 85,
+  "timestamp": "2025-11-12T10:30:00Z"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "udi": 123,
+  "machineId": "uuid",
+  "productId": "L47181",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 1450,
+  "torque": 42.3,
+  "toolWear": 85,
+  "timestamp": "2025-11-12T10:30:00.000Z"
+}
+```
+
+---
+
+### 2. Create Batch Sensor Readings
+
+**Endpoint:** `POST /sensors/batch`  
+**Auth:** Required (Admin, Operator)
+
+**Request:** (Max 100 readings per request)
+```json
+{
+  "readings": [
+    {
+      "machineId": "uuid",
+      "productId": "L47181",
+      "airTemp": 298.5,
+      "processTemp": 308.2,
+      "rotationalSpeed": 1450,
+      "torque": 42.3,
+      "toolWear": 85,
+      "timestamp": "2025-11-12T10:30:00Z"
+    },
+    {
+      "machineId": "uuid",
+      "productId": "L47181",
+      "airTemp": 299.1,
+      "processTemp": 308.8,
+      "rotationalSpeed": 1460,
+      "torque": 43.1,
+      "toolWear": 86,
+      "timestamp": "2025-11-12T10:31:00Z"
+    }
+  ]
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "count": 2,
+  "message": "Successfully created 2 sensor readings"
+}
+```
+
+---
+
+### 3. Get Sensor Readings
+
+**Endpoint:** `GET /sensors`  
+**Auth:** Required (All roles)
+
+**Query Parameters:**
+- `machineId` (optional) - Filter by machine
+- `startDate` (optional) - Filter by start date (ISO 8601)
+- `endDate` (optional) - Filter by end date (ISO 8601)
+- `limit` (optional) - Results per page (default: 100, max: 1000)
+- `offset` (optional) - Pagination offset (default: 0)
+
+**Example:** `GET /sensors?machineId=uuid&startDate=2025-11-01&limit=50`
+
+**Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "udi": 123,
+      "machineId": "uuid",
+      "productId": "L47181",
+      "airTemp": 298.5,
+      "processTemp": 308.2,
+      "rotationalSpeed": 1450,
+      "torque": 42.3,
+      "toolWear": 85,
+      "timestamp": "2025-11-12T10:30:00.000Z"
+    }
+  ],
+  "meta": {
+    "total": 500,
+    "limit": 50,
+    "offset": 0,
+    "hasMore": true
+  }
+}
+```
+
+---
+
+### 4. Get Sensor Reading by UDI
+
+**Endpoint:** `GET /sensors/:udi`  
+**Auth:** Required (All roles)
+
+**Response:** `200 OK`
+```json
+{
+  "udi": 123,
+  "machineId": "uuid",
+  "productId": "L47181",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 1450,
+  "torque": 42.3,
+  "toolWear": 85,
+  "timestamp": "2025-11-12T10:30:00.000Z",
+  "machine": {
+    "id": "uuid",
+    "productId": "L47181",
+    "name": "Machine L47181",
+    "type": "L",
+    "status": "operational"
+  }
+}
+```
+
+---
+
+### 5. Get Sensor Statistics
+
+**Endpoint:** `GET /sensors/statistics/:machineId`  
+**Auth:** Required (All roles)
+
+**Query Parameters:**
+- `limit` (optional) - Number of recent readings to analyze (default: 100)
+
+**Response:** `200 OK`
+```json
+{
+  "machineId": "uuid",
+  "readingsAnalyzed": 100,
+  "statistics": {
+    "airTemp": {
+      "min": 295.2,
+      "max": 302.5,
+      "avg": 298.5,
+      "median": 298.3
+    },
+    "processTemp": {
+      "min": 305.1,
+      "max": 312.8,
+      "avg": 308.2,
+      "median": 308.0
+    },
+    "rotationalSpeed": {
+      "min": 1200,
+      "max": 1600,
+      "avg": 1450,
+      "median": 1455
+    },
+    "torque": {
+      "min": 30.5,
+      "max": 50.2,
+      "avg": 42.3,
+      "median": 42.1
+    },
+    "toolWear": {
+      "min": 0,
+      "max": 200,
+      "avg": 85,
+      "median": 82
+    }
+  }
+}
+```
+
+---
+
+### 6. Delete Sensor Reading
+
+**Endpoint:** `DELETE /sensors/:udi`  
+**Auth:** Required (Admin only)
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Sensor reading deleted successfully"
+}
+```
+
+---
+
+## 🔐 Authentication API
+
 ### 1. Sign Up (Registration)
 
 **Endpoint:** `POST /auth/signup`

@@ -23,8 +23,7 @@
     "prisma:generate": "dotenv -e .env -- prisma generate",
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
     "prisma:seed": "dotenv -e .env -- ts-node prisma/seed/seed.ts",
-    "prisma:verify": "dotenv -e .env -- ts-node prisma/seed/verify.ts",
-    "config:check": "node scripts/check-config.js"
+    "prisma:verify": "dotenv -e .env -- ts-node prisma/seed/verify.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.7",

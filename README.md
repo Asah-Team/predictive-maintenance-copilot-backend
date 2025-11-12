@@ -16,14 +16,31 @@ Backend API untuk sistem Predictive Maintenance menggunakan NestJS, PostgreSQL, 
 
 ## ✨ Features
 
+### 🔐 Authentication & Authorization
 - ✅ Authentication dengan Supabase (Sign Up, Sign In, Sign Out)
 - ✅ Email Verification
 - ✅ JWT Token & Refresh Token
 - ✅ Session Management (token invalid setelah logout)
-- ✅ Role-Based Access Control
+- ✅ Role-Based Access Control (Admin, Operator, Viewer)
+
+### 🏭 Machine Management
+- ✅ CRUD Operations untuk machines
+- ✅ Machine statistics (sensor readings count, predictions)
+- ✅ Filter & search machines (by type, status, location)
+- ✅ Pagination support
+
+### 📊 Sensor Data Management
+- ✅ Record sensor readings (single & batch)
+- ✅ Query sensor data dengan filter (date range, machine)
+- ✅ Statistical analysis (min, max, avg, median)
+- ✅ Support untuk multiple machines
+
+### 🛠 Technical Features
 - ✅ Input Validation dengan Zod
 - ✅ PostgreSQL dengan Prisma ORM
 - ✅ RESTful API Design
+- ✅ Comprehensive error handling
+- ✅ Postman collection untuk testing
 
 ---
 
@@ -128,6 +145,28 @@ Production: https://your-domain.com
 | `/auth/verify-email/callback` | POST | ❌ | Callback verifikasi email |
 | `/auth/resend-verification` | POST | ❌ | Kirim ulang email verifikasi |
 
+### Machine Management Endpoints
+
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/machines` | POST | ✅ | Admin, Operator | Create new machine |
+| `/machines` | GET | ✅ | All | Get all machines (with filters) |
+| `/machines/:id` | GET | ✅ | All | Get machine by ID |
+| `/machines/:id/stats` | GET | ✅ | All | Get machine statistics |
+| `/machines/:id` | PATCH | ✅ | Admin, Operator | Update machine |
+| `/machines/:id` | DELETE | ✅ | Admin | Delete machine |
+
+### Sensors Endpoints
+
+| Endpoint | Method | Auth | Roles | Description |
+|----------|--------|------|-------|-------------|
+| `/sensors` | POST | ✅ | Admin, Operator | Create sensor reading |
+| `/sensors/batch` | POST | ✅ | Admin, Operator | Create multiple sensor readings |
+| `/sensors` | GET | ✅ | All | Get sensor readings (with filters) |
+| `/sensors/:udi` | GET | ✅ | All | Get sensor reading by UDI |
+| `/sensors/statistics/:machineId` | GET | ✅ | All | Get sensor statistics for machine |
+| `/sensors/:udi` | DELETE | ✅ | Admin | Delete sensor reading |
+
 ### Example Usage
 
 #### 1. Sign Up (Daftar)
@@ -192,7 +231,150 @@ Content-Type: application/json
 
 > 💾 **Simpan accessToken** untuk request selanjutnya!
 
-#### 4. Get Profile
+#### 4. Create Machine
+
+```bash
+POST /machines
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "productId": "L47181",
+  "type": "L",
+  "name": "Machine L47181",
+  "description": "Low quality variant machine",
+  "location": "Factory Floor 2",
+  "installationDate": "2023-02-06",
+  "lastMaintenanceDate": "2024-06-22",
+  "status": "operational"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "productId": "L47181",
+  "type": "L",
+  "name": "Machine L47181",
+  "status": "operational",
+  "createdAt": "2025-11-12T00:00:00.000Z"
+}
+```
+
+#### 5. Get All Machines
+
+```bash
+GET /machines?type=L&status=operational&limit=10
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "productId": "L47181",
+      "name": "Machine L47181",
+      "type": "L",
+      "status": "operational",
+      "_count": {
+        "sensorReadings": 150
+      }
+    }
+  ],
+  "meta": {
+    "total": 100,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  }
+}
+```
+
+#### 6. Create Sensor Reading
+
+```bash
+POST /sensors
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "machineId": "uuid",
+  "productId": "L47181",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 1450,
+  "torque": 42.3,
+  "toolWear": 85,
+  "timestamp": "2025-11-12T10:30:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "udi": 123,
+  "machineId": "uuid",
+  "productId": "L47181",
+  "airTemp": 298.5,
+  "processTemp": 308.2,
+  "rotationalSpeed": 1450,
+  "torque": 42.3,
+  "toolWear": 85,
+  "timestamp": "2025-11-12T10:30:00.000Z"
+}
+```
+
+#### 7. Get Sensor Statistics
+
+```bash
+GET /sensors/statistics/uuid?limit=100
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Response:**
+```json
+{
+  "machineId": "uuid",
+  "readingsAnalyzed": 100,
+  "statistics": {
+    "airTemp": {
+      "min": 295.2,
+      "max": 302.5,
+      "avg": 298.5,
+      "median": 298.3
+    },
+    "processTemp": {
+      "min": 305.1,
+      "max": 312.8,
+      "avg": 308.2,
+      "median": 308.0
+    },
+    "rotationalSpeed": {
+      "min": 1200,
+      "max": 1600,
+      "avg": 1450,
+      "median": 1455
+    },
+    "torque": {
+      "min": 30.5,
+      "max": 50.2,
+      "avg": 42.3,
+      "median": 42.1
+    },
+    "toolWear": {
+      "min": 0,
+      "max": 200,
+      "avg": 85,
+      "median": 82
+    }
+  }
+}
+```
+
+#### 8. Get Profile
 
 ```bash
 GET /auth/me
@@ -237,18 +419,60 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 4. Test endpoints sesuai urutan:
    - Sign Up → Verify Email → Sign In → Get Profile → Sign Out
 
+## 📦 Database Schema
+
+### Models
+
+#### User
+- `id` - Primary key
+- `supabaseId` - Supabase user ID
+- `email` - Email (unique)
+- `fullName` - Full name
+- `role` - User role (admin, operator, viewer)
+- `isActive` - Account status
+
+#### Machine
+- `id` - Primary key (UUID)
+- `productId` - Product identifier (unique)
+- `type` - Machine type (L, M, H)
+- `name` - Machine name
+- `description` - Description
+- `location` - Physical location
+- `installationDate` - Installation date
+- `lastMaintenanceDate` - Last maintenance date
+- `status` - Status (operational, maintenance, offline, retired)
+
+#### SensorData
+- `udi` - Primary key (auto-increment)
+- `machineId` - Foreign key to Machine
+- `productId` - Product identifier
+- `airTemp` - Air temperature (K)
+- `processTemp` - Process temperature (K)
+- `rotationalSpeed` - Rotational speed (RPM)
+- `torque` - Torque (Nm)
+- `toolWear` - Tool wear time (minutes)
+- `timestamp` - Reading timestamp
+
+#### PredictionResult
+- `id` - Primary key (UUID)
+- `machineId` - Foreign key to Machine
+- `riskScore` - Risk score (0-1)
+- `failurePredicted` - Failure prediction flag
+- `failureType` - Type of failure
+- `anomalyDetected` - Anomaly detection flag
+- `predictedFailureTime` - Predicted failure time
+- `confidence` - Prediction confidence (0-1)
+- `timestamp` - Prediction timestamp
+
 ## 📦 Database Seeding
 
 Untuk testing, Anda bisa seed data sample:
 
 ```bash
-npm run seed
+npm run prisma:seed
 ```
 
-Ini akan membuat:
-- 4 mesin (machines)
-- Sensor untuk setiap mesin
-- Sample data untuk testing
+Ini akan membuat sample data untuk testing API
 
 ## 🔧 Scripts
 
@@ -284,7 +508,15 @@ predictive-maintenance-copilot-backend/
 │   │   ├── filters/           # Exception filters
 │   │   └── prisma/            # Prisma service
 │   ├── machine/               # Machine module
+│   │   ├── dto/               # Machine DTOs (Zod validation)
+│   │   ├── machine.controller.ts # Machine endpoints
+│   │   ├── machine.service.ts    # Machine business logic
+│   │   └── machine.module.ts     # Machine module
 │   ├── sensors/               # Sensors module
+│   │   ├── dto/               # Sensor DTOs (Zod validation)
+│   │   ├── sensors.controller.ts # Sensor endpoints
+│   │   ├── sensors.service.ts    # Sensor business logic
+│   │   └── sensors.module.ts     # Sensor module
 │   ├── user/                  # User module
 │   ├── app.module.ts          # Root module
 │   └── main.ts                # Entry point

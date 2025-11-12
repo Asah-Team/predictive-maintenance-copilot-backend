@@ -46,7 +46,7 @@ lerna-debug.log*
 scripts/test-supabase.js
 scripts/test-signup.js
 scripts/check-supabase-config.js
-
+examples
 # temp directory
 .temp
 .tmp

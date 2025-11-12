@@ -12,8 +12,11 @@ async function bootstrap() {
   // Global exception filter for better error messages
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Enable CORS
-  app.enableCors();
+  // Enable CORS for HTTP and WebSocket
+  app.enableCors({
+    origin: '*', // Update di production dengan frontend URL
+    credentials: true,
+  });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

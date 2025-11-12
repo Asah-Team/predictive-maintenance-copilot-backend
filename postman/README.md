@@ -2,6 +2,11 @@
 
 Panduan lengkap untuk menggunakan Postman Collection untuk testing Predictive Maintenance API.
 
+> **⚠️ Note tentang WebSocket:**  
+> WebSocket request **TIDAK BISA** di-export/import dalam Postman collection JSON.  
+> Untuk test WebSocket, lihat: [`examples/POSTMAN-WEBSOCKET-SETUP.md`](../examples/POSTMAN-WEBSOCKET-SETUP.md)  
+> Atau gunakan browser test: [`examples/test-websocket.html`](../examples/test-websocket.html)
+
 ---
 
 ## 📥 Import Collection & Environment
