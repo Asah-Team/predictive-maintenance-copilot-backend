@@ -33,13 +33,53 @@ export class AnalyzeConditionNode {
 
       // Determine base risk from prediction
       let riskScore = 0;
+      let timeToFailure: {
+        estimatedDays: number;
+        estimatedDate: Date;
+        confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+        failureType?: string;
+      } | undefined;
+
       if (state.prediction_data) {
         riskScore = state.prediction_data.riskScore;
 
-        if (state.prediction_data.failurePredicted) {
-          alerts.push(
-            `⚠️ FAILURE PREDICTED: ${state.prediction_data.failureType || 'Unknown type'}`,
+        // Calculate time to failure
+        if (state.prediction_data.failurePredicted || riskScore >= 0.5) {
+          const estimatedDays = this.calculateTimeToFailure(
+            riskScore,
+            state.sensor_data,
+            state.prediction_data.predictedFailureTime,
           );
+          const estimatedDate =
+            state.prediction_data.predictedFailureTime ||
+            new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000);
+
+          const confidence = state.prediction_data.confidence
+            ? state.prediction_data.confidence >= 0.8
+              ? 'HIGH'
+              : state.prediction_data.confidence >= 0.6
+                ? 'MEDIUM'
+                : 'LOW'
+            : 'MEDIUM';
+
+          timeToFailure = {
+            estimatedDays,
+            estimatedDate,
+            confidence,
+            failureType: state.prediction_data.failureType,
+          };
+
+          this.logger.log(
+            `Time to failure: ${estimatedDays} days (${confidence} confidence)`,
+          );
+        }
+
+        if (state.prediction_data.failurePredicted) {
+          const failureMsg = timeToFailure
+            ? `⚠️ FAILURE PREDICTED: ${state.prediction_data.failureType || 'Unknown type'} dalam ${timeToFailure.estimatedDays} hari`
+            : `⚠️ FAILURE PREDICTED: ${state.prediction_data.failureType || 'Unknown type'}`;
+
+          alerts.push(failureMsg);
           recommendations.push(
             `URGENT: Investigate predicted ${state.prediction_data.failureType} failure`,
           );
@@ -114,10 +154,16 @@ Sensor Status:
       const analysis: AnalysisResult = {
         riskScore,
         riskLevel,
-        summary: this.generateSummary(state.machine_context, riskLevel, alerts),
+        summary: this.generateSummary(
+          state.machine_context,
+          riskLevel,
+          alerts,
+          timeToFailure,
+        ),
         alerts,
         recommendations,
         anomalies,
+        timeToFailure,
       };
 
       this.logger.log(
@@ -135,6 +181,47 @@ Sensor Status:
         should_continue: true,
       };
     }
+  }
+
+  /**
+   * Calculate estimated time to failure
+   */
+  private calculateTimeToFailure(
+    riskScore: number,
+    sensorData?: any[],
+    predictedFailureTime?: Date,
+  ): number {
+    // If we have predictedFailureTime from DB, use it
+    if (predictedFailureTime) {
+      const now = new Date();
+      const diffMs = predictedFailureTime.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return Math.max(1, diffDays);
+    }
+
+    // Otherwise calculate from risk score
+    let estimatedDays: number;
+
+    if (riskScore >= 0.9) {
+      estimatedDays = 1 + Math.random(); // 1-2 days
+    } else if (riskScore >= 0.7) {
+      estimatedDays = 2 + Math.random() * 3; // 2-5 days
+    } else if (riskScore >= 0.5) {
+      estimatedDays = 5 + Math.random() * 5; // 5-10 days
+    } else {
+      estimatedDays = 10 + Math.random() * 10; // 10-20 days
+    }
+
+    // Adjust based on sensor trends
+    if (sensorData && sensorData.length > 0) {
+      const analysis = this.analyzeSensorTrends(sensorData);
+
+      if (analysis.temperatureAnomaly) estimatedDays *= 0.7;
+      if (analysis.toolWearHigh) estimatedDays *= 0.8;
+      if (analysis.vibrationAnomaly) estimatedDays *= 0.75;
+    }
+
+    return Math.max(1, Math.round(estimatedDays));
   }
 
   private analyzeSensorTrends(sensorData: any[]): {
@@ -186,8 +273,25 @@ Sensor Status:
     machineContext: any,
     riskLevel: string,
     alerts: string[],
+    timeToFailure?: {
+      estimatedDays: number;
+      estimatedDate: Date;
+      confidence: string;
+      failureType?: string;
+    },
   ): string {
     let summary = `Machine ${machineContext?.productId || 'Unknown'} Status: **${riskLevel}**`;
+
+    if (timeToFailure) {
+      const daysText =
+        timeToFailure.estimatedDays === 1
+          ? '1 hari'
+          : `${timeToFailure.estimatedDays} hari`;
+      const failureTypeText = timeToFailure.failureType
+        ? ` (${timeToFailure.failureType})`
+        : '';
+      summary += `\n⏰ **Estimasi waktu hingga failure${failureTypeText}: ${daysText}**`;
+    }
 
     if (alerts.length > 0) {
       summary += `\n\n**Alerts:**\n${alerts.map((a) => `• ${a}`).join('\n')}`;

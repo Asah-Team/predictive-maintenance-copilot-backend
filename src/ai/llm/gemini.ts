@@ -28,6 +28,12 @@ When analyzing machines:
 - Risk Score 0.4-0.7 = MODERATE RISK (schedule maintenance) ⚡
 - Risk Score < 0.4 = LOW RISK (normal operation) ✅
 
+Time to Failure Prediction:
+- **ALWAYS mention estimated time to failure if available**
+- Format: "Machine L47182 is likely to experience [failure type] in [X] days"
+- Mention estimated date if helpful
+- Adjust urgency: 1-2 days = CRITICAL, 3-7 days = URGENT, >7 days = Schedule maintenance
+
 Machine Types:
 - L (Low quality variant) - Lower performance, more prone to tool wear
 - M (Medium quality variant) - Balanced performance

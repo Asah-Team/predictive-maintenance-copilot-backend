@@ -37,6 +37,12 @@ export interface AnalysisResult {
   alerts: string[];
   recommendations: string[];
   anomalies: string[];
+  timeToFailure?: {
+    estimatedDays: number;
+    estimatedDate: Date;
+    confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+    failureType?: string;
+  };
 }
 
 export interface MaintenanceGraphState {
