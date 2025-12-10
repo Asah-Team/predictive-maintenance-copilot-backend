@@ -263,17 +263,20 @@ export class NestApiClient {
   async getMachinesByPrediction(timeWindow?: string) {
     try {
       const now = new Date();
-      const cutoffDate = new Date();
+      const futureDate = new Date();
 
-      // Calculate cutoff date based on time window
+      // Calculate future date based on time window
       if (timeWindow === '1_day') {
-        cutoffDate.setDate(cutoffDate.getDate() - 1);
+        futureDate.setDate(futureDate.getDate() + 1);
       } else if (timeWindow === '3_days') {
-        cutoffDate.setDate(cutoffDate.getDate() - 3);
+        futureDate.setDate(futureDate.getDate() + 3);
       } else if (timeWindow === '1_week') {
-        cutoffDate.setDate(cutoffDate.getDate() - 7);
+        futureDate.setDate(futureDate.getDate() + 7);
       } else if (timeWindow === '1_month') {
-        cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+        futureDate.setMonth(futureDate.getMonth() + 1);
+      } else {
+        // Default: look 30 days ahead
+        futureDate.setDate(futureDate.getDate() + 30);
       }
 
       const machines = await this.prisma.machine.findMany({
@@ -281,10 +284,24 @@ export class NestApiClient {
           predictions: {
             where: {
               failurePredicted: true,
-              timestamp: {
-                gte: cutoffDate,
-                lte: now,
-              },
+              OR: [
+                {
+                  // Has predictedFailureTime in the future
+                  predictedFailureTime: {
+                    gte: now,
+                    lte: futureDate,
+                  },
+                },
+                {
+                  // Or has high risk score (recent prediction)
+                  riskScore: {
+                    gte: 0.5,
+                  },
+                  timestamp: {
+                    gte: new Date(now.getTime() - 24 * 60 * 60 * 1000), // Last 24h
+                  },
+                },
+              ],
             },
             orderBy: { timestamp: 'desc' },
             take: 1,
@@ -296,6 +313,30 @@ export class NestApiClient {
         .filter((m) => m.predictions.length > 0)
         .map((machine) => {
           const prediction = machine.predictions[0];
+
+          // Calculate days until failure
+          let daysUntilFailure: number | null = null;
+          if (prediction?.predictedFailureTime) {
+            const diffMs =
+              prediction.predictedFailureTime.getTime() - now.getTime();
+            daysUntilFailure = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          }
+
+          const riskLevel =
+            prediction?.riskScore >= 0.7
+              ? 'HIGH'
+              : prediction?.riskScore >= 0.4
+                ? 'MODERATE'
+                : 'LOW';
+
+          const alerts: string[] = [];
+          if (prediction?.failureType) {
+            const timeText = daysUntilFailure
+              ? `in ${daysUntilFailure} day${daysUntilFailure > 1 ? 's' : ''}`
+              : 'soon';
+            alerts.push(`⚠️ ${prediction.failureType} predicted ${timeText}`);
+          }
+
           return {
             id: machine.id,
             productId: machine.productId,
@@ -303,14 +344,20 @@ export class NestApiClient {
             type: machine.type,
             location: machine.location,
             riskScore: prediction?.riskScore || 0,
-            riskLevel: 'HIGH',
+            riskLevel,
             predictedFailureType: prediction?.failureType,
             predictedFailureTime: prediction?.predictedFailureTime,
-            criticalAlerts: [
-              `Prediksi kegagalan dalam ${timeWindow}: ${prediction?.failureType}`,
-            ],
+            daysUntilFailure,
+            criticalAlerts: alerts,
           };
         });
+
+      // Sort by days until failure (most urgent first)
+      machinesWithPredictions.sort((a, b) => {
+        if (a.daysUntilFailure === null) return 1;
+        if (b.daysUntilFailure === null) return -1;
+        return a.daysUntilFailure - b.daysUntilFailure;
+      });
 
       return machinesWithPredictions;
     } catch (error) {

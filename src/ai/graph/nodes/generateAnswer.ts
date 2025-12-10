@@ -140,6 +140,27 @@ export class GenerateAnswerNode {
       parts.push(`Risk Level: ${state.analysis.riskLevel}`);
       parts.push(`Risk Score: ${state.analysis.riskScore.toFixed(3)}`);
 
+      // Add time to failure information
+      if (state.analysis.timeToFailure) {
+        const ttf = state.analysis.timeToFailure;
+        parts.push(`\n⏰ TIME TO FAILURE PREDICTION:`);
+        parts.push(`- Estimated Days: ${ttf.estimatedDays} hari`);
+        parts.push(
+          `- Estimated Date: ${ttf.estimatedDate.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}`,
+        );
+        parts.push(`- Confidence: ${ttf.confidence}`);
+        if (ttf.failureType) {
+          parts.push(`- Failure Type: ${ttf.failureType}`);
+        }
+        parts.push(
+          `\n⚠️ IMPORTANT: Sebutkan estimasi waktu ini dalam response Anda!`,
+        );
+      }
+
       if (state.analysis.alerts.length > 0) {
         parts.push(
           `Alerts:\n${state.analysis.alerts.map((a) => `- ${a}`).join('\n')}`,
