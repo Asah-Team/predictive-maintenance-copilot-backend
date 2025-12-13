@@ -85,4 +85,72 @@ export class UserService {
       },
     });
   }
+
+  /**
+   * Find or create user with Supabase ID sync
+   * Uses transaction to prevent race conditions
+   * If user exists with different ID, sync with Supabase ID
+   */
+  async findOrCreateFromSupabase(data: {
+    id: string; // Supabase ID
+    email: string;
+    fullName?: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      // Try to find by Supabase ID first
+      let user = await tx.user.findUnique({
+        where: { id: data.id },
+      });
+
+      if (user) {
+        return user;
+      }
+
+      // Check if user exists by email (ID mismatch scenario)
+      const existingUser = await tx.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (existingUser) {
+        // ID mismatch detected - sync with Supabase ID
+        console.warn(
+          `⚠️ ID mismatch detected for ${data.email}: DB=${existingUser.id}, Supabase=${data.id}`,
+        );
+        console.log(`🔄 Syncing database ID to match Supabase...`);
+
+        // Delete old record and create new one with correct ID
+        // (Can't update ID directly due to primary key constraint)
+        await tx.user.delete({
+          where: { id: existingUser.id },
+        });
+
+        user = await tx.user.create({
+          data: {
+            id: data.id, // Use Supabase ID as source of truth
+            email: data.email,
+            fullName: data.fullName || existingUser.fullName,
+            role: existingUser.role,
+            isActive: existingUser.isActive,
+          },
+        });
+
+        console.log(`✅ ID synced successfully: ${data.id}`);
+        return user;
+      }
+
+      // User doesn't exist - create new
+      user = await tx.user.create({
+        data: {
+          id: data.id,
+          email: data.email,
+          fullName: data.fullName,
+          role: UserRole.operator,
+          isActive: true,
+        },
+      });
+
+      console.log(`✅ New user created: ${data.email}`);
+      return user;
+    });
+  }
 }

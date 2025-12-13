@@ -21,6 +21,19 @@ export class SupabaseService {
     return this.supabase;
   }
 
+  getAdminClient(): SupabaseClient {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const serviceRoleKey = this.configService.get<string>(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Supabase URL and Service Role Key must be provided');
+    }
+
+    return createClient(supabaseUrl, serviceRoleKey);
+  }
+
   async signUp(email: string, password: string, metadata?: any) {
     const baseUrl =
       this.configService.get<string>('APP_URL') || 'http://localhost:3000';

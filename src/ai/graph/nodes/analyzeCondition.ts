@@ -33,12 +33,14 @@ export class AnalyzeConditionNode {
 
       // Determine base risk from prediction
       let riskScore = 0;
+      // eslint-disable-next-line prettier/prettier
       let timeToFailure: {
-        estimatedDays: number;
-        estimatedDate: Date;
-        confidence: 'LOW' | 'MEDIUM' | 'HIGH';
-        failureType?: string;
-      } | undefined;
+            estimatedDays: number;
+            estimatedDate: Date;
+            confidence: 'LOW' | 'MEDIUM' | 'HIGH';
+            failureType?: string;
+          }
+        | undefined;
 
       if (state.prediction_data) {
         riskScore = state.prediction_data.riskScore;
@@ -172,6 +174,8 @@ Sensor Status:
 
       return {
         analysis,
+        failure_type: state.prediction_data?.failureType, // For RAG knowledge retrieval
+        anomaly_detected: anomalies.length > 0, // Flag for RAG
         should_continue: true,
       };
     } catch (error) {

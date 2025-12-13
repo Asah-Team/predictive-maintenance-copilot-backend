@@ -48,18 +48,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
 
       // Payload dari Supabase JWT berisi: sub (user id), email, role, dll
-      const user = await this.userService.findBySupabaseId(payload.sub);
-
-      if (!user) {
-        // Jika user belum ada di database lokal, create dari Supabase data
-        const newUser = await this.userService.createFromSupabase({
-          id: payload.sub,
-          email: payload.email,
-          fullName: payload.user_metadata?.full_name,
-        });
-        console.log('✅ New user created:', payload.email);
-        return newUser;
-      }
+      // Use transaction + ID sync untuk handle race conditions & ID mismatches
+      const user = await this.userService.findOrCreateFromSupabase({
+        id: payload.sub,
+        email: payload.email,
+        fullName: payload.user_metadata?.full_name,
+      });
 
       if (!user.isActive) {
         throw new UnauthorizedException('User account is inactive');

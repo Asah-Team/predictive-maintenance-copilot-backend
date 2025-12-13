@@ -62,6 +62,8 @@ jobs:
             --set-env-vars="SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}" \
             --set-env-vars="SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
+            --set-env-vars="LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}" \
+            --set-env-vars="GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
             --set-env-vars="NODE_ENV=production" \
             --set-env-vars="APP_URL=${{ secrets.APP_URL }}" \
             --memory=1Gi \

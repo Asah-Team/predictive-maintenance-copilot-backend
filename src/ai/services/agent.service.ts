@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MaintenanceGraph } from '../graph/maintenance.graph';
+import { VectorSearchService } from '../../document/services/vector-search.service';
+import { EmbeddingService } from '../../document/services/embedding.service';
 import type { StructuredAiResponse } from '../../chat/dto/chat.dto';
 
 interface ChatResult {
@@ -17,18 +19,40 @@ export class AiAgentService {
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    private vectorSearch: VectorSearchService,
+    private embeddingService: EmbeddingService,
   ) {
     this.initializeGraph();
   }
 
   private initializeGraph() {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const llmProvider =
+      this.configService.get<string>('LLM_PROVIDER') || 'groq';
+    let apiKey: string;
+    if (llmProvider === 'groq') {
+      const groqKey = this.configService.get<string>('GROQ_API_KEY');
+      if (!groqKey) {
+        throw new Error('GROQ_API_KEY is not configured');
+      }
+      apiKey = groqKey;
+      this.logger.log('Using Groq LLM provider');
+    } else {
+      const geminiKey = this.configService.get<string>('GEMINI_API_KEY');
+      if (!geminiKey) {
+        throw new Error('GEMINI_API_KEY is not configured');
+      }
+      apiKey = geminiKey;
+      this.logger.log('Using Gemini LLM provider');
     }
 
-    this.maintenanceGraph = new MaintenanceGraph(this.prisma, apiKey);
-    this.logger.log('AI Agent initialized with Maintenance Graph');
+    this.maintenanceGraph = new MaintenanceGraph(
+      this.prisma,
+      apiKey,
+      this.vectorSearch,
+      this.embeddingService,
+      llmProvider as 'gemini' | 'groq',
+    );
+    this.logger.log('AI Agent initialized with Maintenance Graph + RAG');
   }
 
   /**

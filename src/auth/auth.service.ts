@@ -70,12 +70,29 @@ export class AuthService {
     let user = await this.userService.findBySupabaseId(data.user.id);
 
     if (!user) {
-      // Create user jika belum ada
-      user = await this.userService.createFromSupabase({
-        id: data.user.id,
-        email: data.user.email!,
-        fullName: data.user.user_metadata?.full_name,
-      });
+      // Cek apakah user sudah ada berdasarkan email
+      const existingUser = await this.userService.findByEmail(data.user.email!);
+
+      if (existingUser) {
+        // Update existing user dengan Supabase ID yang benar
+        user = await this.userService.updateUser(existingUser.id, {
+          fullName: data.user.user_metadata?.full_name || existingUser.fullName,
+        });
+
+        // Update ID jika berbeda (ini edge case, tapi kita handle)
+        if (existingUser.id !== data.user.id) {
+          console.warn(
+            `User ${data.user.email} has different ID in database. This should not happen.`,
+          );
+        }
+      } else {
+        // Create user jika belum ada sama sekali
+        user = await this.userService.createFromSupabase({
+          id: data.user.id,
+          email: data.user.email!,
+          fullName: data.user.user_metadata?.full_name,
+        });
+      }
     }
 
     if (!user.isActive) {
@@ -179,16 +196,12 @@ export class AuthService {
         };
       }
 
-      // Update user di database lokal jika belum ada
-      let user = await this.userService.findBySupabaseId(data.user.id);
-
-      if (!user) {
-        user = await this.userService.createFromSupabase({
-          id: data.user.id,
-          email: data.user.email!,
-          fullName: data.user.user_metadata?.full_name,
-        });
-      }
+      // Update user di database lokal dengan transaction + ID sync
+      const user = await this.userService.findOrCreateFromSupabase({
+        id: data.user.id,
+        email: data.user.email!,
+        fullName: data.user.user_metadata?.full_name,
+      });
 
       return {
         success: true,
@@ -235,21 +248,12 @@ export class AuthService {
         email: data.user.email,
       });
 
-      // Check if user already exists in database
-      let user = await this.userService.findBySupabaseId(data.user.id);
-
-      if (!user) {
-        // Create user in database
-        console.log('Creating user in database...');
-        user = await this.userService.createFromSupabase({
-          id: data.user.id,
-          email: data.user.email!,
-          fullName: data.user.user_metadata?.full_name,
-        });
-        console.log('✅ User created in database');
-      } else {
-        console.log('✅ User already exists in database');
-      }
+      // Ensure user exists in database dengan transaction + ID sync
+      const user = await this.userService.findOrCreateFromSupabase({
+        id: data.user.id,
+        email: data.user.email!,
+        fullName: data.user.user_metadata?.full_name,
+      });
 
       return {
         success: true,

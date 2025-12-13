@@ -5,6 +5,7 @@
 
 import { Logger } from '@nestjs/common';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { BaseLLM } from './base.llm';
 
 const SYSTEM_PROMPT = `You are an expert AI assistant for Predictive Maintenance system. Your role is to:
 
@@ -48,7 +49,7 @@ Failure Types:
 
 When given Context Data about machines, use that information to provide accurate insights.`;
 
-export class GeminiLLM {
+export class GeminiLLM implements BaseLLM {
   private readonly logger = new Logger(GeminiLLM.name);
   private model: ChatGoogleGenerativeAI;
 

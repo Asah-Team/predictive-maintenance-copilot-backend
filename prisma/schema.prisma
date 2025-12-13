@@ -57,6 +57,17 @@ enum MaintenanceStatus {
   @@map("maintenance_status")
 }
 
+enum DocumentType {
+  sop
+  manual
+  datasheet
+  safety
+  maintenance_record
+
+  @@map("document_type")
+}
+
+
 model User {
   id            String         @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
   email         String         @unique
@@ -69,6 +80,7 @@ model User {
   // Relations
   chatMessages  ChatMessage[]
   maintenanceTickets MaintenanceTicket[]
+  documents     Document[]
 
   @@index([email])
   @@map("users")
@@ -172,5 +184,46 @@ model ChatMessage {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@map("chat_messages")
+}
+
+model Document {
+  id           String       @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  filename     String       // Stored filename in Supabase Storage
+  originalName String       @map("original_name") // Original uploaded filename
+  type         DocumentType
+  language     String       @default("id") // "id" or "en"
+  uploadedBy   String       @db.Uuid @map("uploaded_by")
+  fileSize     Int          @map("file_size") // in bytes
+  pageCount    Int?         @map("page_count")
+  metadata     Json?        // Additional metadata (author, version, machine_type, etc.)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  
+  // Relations
+  chunks       DocumentChunk[]
+  uploader     User         @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  
+  @@index([type])
+  @@index([uploadedBy])
+  @@index([createdAt])
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id          String   @id @db.Uuid @default(dbgenerated("gen_random_uuid()"))
+  documentId  String   @db.Uuid @map("document_id")
+  content     String   @db.Text
+  pageNumber  Int?     @map("page_number")
+  chunkIndex  Int      @map("chunk_index") // Order of chunk in document
+  embedding   Unsupported("vector(768)")?  // pgvector type for embeddings
+  metadata    Json?    // Additional chunk metadata (section_title, etc.)
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@index([documentId])
+  @@index([documentId, chunkIndex])
+  @@map("document_chunks")
 }
 

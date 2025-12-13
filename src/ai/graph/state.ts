@@ -51,7 +51,7 @@ export interface MaintenanceGraphState {
   conversation_history: Array<{ role: string; content: string }>;
 
   // Query type detection
-  query_type?: 'single_machine' | 'multi_machine'; // Determined by identifyMachine node
+  query_type?: 'single_machine' | 'multi_machine' | 'documentation'; // Determined by identifyMachine node
   analysis_criteria?: {
     criteriaType: 'risk' | 'prediction' | 'anomaly' | 'overheating' | 'generic';
     timeWindow?: string; // e.g., '1_day', '3_days', '1_week'
@@ -65,6 +65,12 @@ export interface MaintenanceGraphState {
       location?: string;
       type?: 'L' | 'M' | 'H'; // Match MachineType from Prisma schema
     };
+  };
+
+  // Documentation query filters
+  documentation_filters?: {
+    machineType?: string; // For filtering documentation by machine type
+    intent?: string; // Type of documentation needed
   };
 
   // Single machine processing
@@ -95,6 +101,18 @@ export interface MaintenanceGraphState {
     criticalAlerts: string[];
     recommendations: string[];
   };
+
+  // RAG Knowledge Context
+  knowledge_context?: Array<{
+    content: string;
+    source: string;
+    pageNumber?: number | null;
+    similarity: number;
+    documentType?: string;
+  }>;
+  repair_steps?: string[];
+  failure_type?: string; // Detected failure type for knowledge retrieval
+  anomaly_detected?: boolean; // Flag for anomaly detection
 
   // Clarification
   needs_clarification?: boolean;
