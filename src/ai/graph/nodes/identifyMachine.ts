@@ -1,10 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { NestApiClient } from '../../tools/nestApiClient';
-import { GeminiLLM } from '../../llm/gemini';
+import { BaseLLM } from '../../llm/base.llm';
 import type { MaintenanceGraphState } from '../state';
 
 interface LLMParsed {
   isMultiMachineQuery: boolean;
+  isDocumentationQuery?: boolean;
   intent: string | null;
   compoundIntents: string[];
   machine: {
@@ -23,7 +24,7 @@ export class IdentifyMachineNode {
 
   constructor(
     private apiClient: NestApiClient,
-    private llm: GeminiLLM,
+    private llm: BaseLLM,
   ) {}
 
   async execute(
@@ -33,9 +34,36 @@ export class IdentifyMachineNode {
       const input = state.user_input;
       this.logger.log(`LLM parsing: "${input}"`);
 
+      /** 0) FAST PATH: Pattern-based documentation detection (skip LLM for common patterns) */
+      const fastDocCheck = this.fastDocumentationCheck(input);
+      if (fastDocCheck) {
+        this.logger.log('[FAST PATH] Documentation query detected via pattern matching');
+        return {
+          query_type: 'documentation',
+          documentation_filters: {
+            machineType: fastDocCheck.machineType,
+            intent: 'documentation',
+          },
+          should_continue: true,
+        };
+      }
+
       /** 1) PARSING PURE LLM */
       const parsed = await this.llmParse(input);
       this.logger.log(`LLM parsed: ${JSON.stringify(parsed)}`);
+
+      /** DOCUMENTATION QUERY */
+      if (parsed.isDocumentationQuery) {
+        this.logger.log('[DEBUG] Documentation query detected - skipping machine lookup');
+        return {
+          query_type: 'documentation',
+          documentation_filters: {
+            machineType: parsed.machine.type || undefined,
+            intent: parsed.intent || 'documentation',
+          },
+          should_continue: true,
+        };
+      }
 
       /** MULTI MACHINE */
       if (parsed.isMultiMachineQuery) {
@@ -141,6 +169,55 @@ export class IdentifyMachineNode {
     }
   }
 
+  /** 0) FAST PATH: Pattern-based documentation detection */
+  private fastDocumentationCheck(input: string): { machineType?: string } | null {
+    const lowerInput = input.toLowerCase();
+    
+    // Keywords that indicate documentation/SOP queries
+    const docKeywords = [
+      'prosedur',
+      'sop',
+      'cara',
+      'langkah',
+      'panduan',
+      'manual',
+      'petunjuk',
+      'bagaimana',
+      'apa itu',
+      'jelaskan',
+      'procedure',
+      'how to',
+      'what is',
+      'guide',
+      'steps',
+      'preventive maintenance',
+      'perawatan preventif',
+    ];
+    
+    // Check if input contains documentation keywords
+    const hasDocKeyword = docKeywords.some(keyword => lowerInput.includes(keyword));
+    
+    if (!hasDocKeyword) {
+      return null; // Not a documentation query
+    }
+    
+    // Check if it mentions specific machine identifiers (Product ID, location, name)
+    // If it has specific identifiers, it's likely asking about a specific machine
+    const hasProductId = /\b[LMH]\d{5}\b/i.test(input); // Pattern like L12345, M54321, H98765
+    const hasLocation = /lantai|floor|area|ruang|zone|lokasi/i.test(lowerInput);
+    const hasMachineName = /mesin\s+[A-Z0-9-]+\b/i.test(input); // "mesin ABC-123"
+    
+    if (hasProductId || hasLocation || hasMachineName) {
+      return null; // Has specific identifiers, let LLM handle it
+    }
+    
+    // Extract machine type if mentioned (tipe H, type L, etc.)
+    const typeMatch = input.match(/tipe?\s*([LMH])\b/i) || input.match(/type\s*([LMH])\b/i);
+    const machineType = typeMatch ? typeMatch[1].toUpperCase() : undefined;
+    
+    return { machineType };
+  }
+
   /** 1) PURE LLM PARSER */
   private async llmParse(input: string): Promise<LLMParsed> {
     const prompt = `
@@ -150,7 +227,8 @@ Strict JSON only. No Markdown.
 Schema:
 {
   "isMultiMachineQuery": boolean,
-  "intent": "risk" | "prediction" | "anomaly" | "overheating" | "generic" | null,
+  "isDocumentationQuery": boolean,
+  "intent": "risk" | "prediction" | "anomaly" | "overheating" | "documentation" | "generic" | null,
   "compoundIntents": string[],
   "timeWindow": string | null,
   "riskThreshold": string | null,
@@ -162,6 +240,10 @@ Schema:
   },
   "confidence": number
 }
+
+Notes:
+- Set "isDocumentationQuery" to true if user is asking about procedures, SOPs, manuals, maintenance steps, or general knowledge (not analyzing specific machine)
+- For documentation queries, machine.type can be specified for filtering (e.g., "type H machines") but productId/name/location should be null
 
 User input:
 "${input}"

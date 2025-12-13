@@ -9,14 +9,14 @@ import {
   SystemMessage,
   AIMessage,
 } from '@langchain/core/messages';
-import { GeminiLLM } from '../../llm/gemini';
+import { BaseLLM } from '../../llm/base.llm';
 import type { MaintenanceGraphState } from '../state';
 
 export class GenerateAnswerNode {
   private readonly logger = new Logger(GenerateAnswerNode.name);
-  private llm: GeminiLLM;
+  private llm: BaseLLM;
 
-  constructor(llm: GeminiLLM) {
+  constructor(llm: BaseLLM) {
     this.llm = llm;
   }
 
@@ -26,8 +26,10 @@ export class GenerateAnswerNode {
     try {
       this.logger.log('Generating answer...');
 
-      // ⚠️ SAFETY CHECK: If no machine context or machine list, this should have been caught earlier
+      // ⚠️ SAFETY CHECK: Only require machine context for single/multi machine queries
+      // Documentation queries don't need machine context
       if (
+        state.query_type !== 'documentation' &&
         !state.machine_context &&
         (!state.machine_list || state.machine_list.length === 0)
       ) {
@@ -48,9 +50,10 @@ export class GenerateAnswerNode {
 
       const messages: any[] = [new SystemMessage(systemPrompt)];
 
-      // Add conversation history (last 5 messages)
+      // Add conversation history (last 2 messages for documentation, last 3 for machine analysis)
+      const historyLimit = state.query_type === 'documentation' ? 2 : 3;
       if (state.conversation_history && state.conversation_history.length > 0) {
-        for (const msg of state.conversation_history.slice(-5)) {
+        for (const msg of state.conversation_history.slice(-historyLimit)) {
           if (msg.role === 'user') {
             messages.push(new HumanMessage(msg.content));
           } else if (msg.role === 'assistant') {
@@ -97,8 +100,29 @@ export class GenerateAnswerNode {
   private buildAnalysisContext(state: MaintenanceGraphState): string {
     const parts: string[] = [];
 
+    // Handle documentation query scenario
+    if (state.query_type === 'documentation') {
+      parts.push(`=== DOCUMENTATION QUERY ===`);
+      parts.push(`User is asking for general information/procedures, not analyzing a specific machine.`);
+      
+      if (state.documentation_filters?.machineType) {
+        parts.push(`Machine Type Filter: Type ${state.documentation_filters.machineType} machines`);
+      }
+      
+      // If no relevant documents found, provide general guidance
+      if (!state.knowledge_context || state.knowledge_context.length === 0) {
+        parts.push(`\nNote: No specific SOP documents were found in the database.`);
+        parts.push(`Please provide general best practices and recommendations based on your knowledge of:`);
+        parts.push(`- Preventive maintenance procedures for industrial machines`);
+        parts.push(`- Common maintenance schedules and checklists`);
+        parts.push(`- Safety protocols and inspection steps`);
+        if (state.documentation_filters?.machineType) {
+          parts.push(`- Specific considerations for Type ${state.documentation_filters.machineType} quality variant machines`);
+        }
+      }
+    }
     // Handle multi-machine scenario
-    if (state.machine_list && state.machine_list.length > 0) {
+    else if (state.machine_list && state.machine_list.length > 0) {
       parts.push(`=== MULTI-MACHINE ANALYSIS ===`);
       parts.push(`Found ${state.machine_list.length} machines in database:`);
       for (const machine of state.machine_list) {
@@ -196,6 +220,34 @@ export class GenerateAnswerNode {
 - Failure Predicted: ${pred.failurePredicted ? 'YES' : 'NO'}
 - Failure Type: ${pred.failureType || 'None'}
 - Confidence: ${pred.confidence ? `${(pred.confidence * 100).toFixed(1)}%` : 'N/A'}`);
+    }
+
+    // Add RAG Knowledge Context (SOP/Manual content)
+    if (state.knowledge_context && state.knowledge_context.length > 0) {
+      parts.push(`\n=== RELEVANT SOP/MANUAL CONTENT ===`);
+      parts.push(
+        `Found ${state.knowledge_context.length} relevant document sections:`,
+      );
+
+      for (let i = 0; i < state.knowledge_context.length; i++) {
+        const doc = state.knowledge_context[i];
+        parts.push(`\n[Document ${i + 1}] ${doc.source}${doc.pageNumber ? ` (Page ${doc.pageNumber})` : ''}`);
+        parts.push(`Relevance: ${(doc.similarity * 100).toFixed(1)}%`);
+        parts.push(`Content:\n${doc.content}\n`);
+      }
+
+      parts.push(`=== END SOP/MANUAL CONTENT ===`);
+      parts.push(
+        `IMPORTANT: Base your repair recommendations on the SOP content above. Cite sources with page numbers when providing repair steps.`,
+      );
+    }
+
+    // Add extracted repair steps if available
+    if (state.repair_steps && state.repair_steps.length > 0) {
+      parts.push(`\nExtracted Repair Steps from SOP:`);
+      for (let i = 0; i < state.repair_steps.length; i++) {
+        parts.push(`${i + 1}. ${state.repair_steps[i]}`);
+      }
     }
 
     return parts.join('\n\n');

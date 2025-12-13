@@ -8,13 +8,18 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NestApiClient } from '../tools/nestApiClient';
 import { GeminiLLM } from '../llm/gemini';
+import { GroqLLM } from '../llm/groq';
+import { BaseLLM } from '../llm/base.llm';
 import type { MaintenanceGraphState } from './state';
 import { IdentifyMachineNode } from './nodes/identifyMachine';
 import { AnalyzeMachinesNode } from './nodes/analyzeMachines';
 import { FetchSensorNode } from './nodes/fetchSensor';
 import { FetchPredictionFromDBNode } from './nodes/fetchPredictionFromDB';
 import { AnalyzeConditionNode } from './nodes/analyzeCondition';
+import { RetrieveKnowledgeNode } from './nodes/retrieveKnowledge';
 import { GenerateAnswerNode } from './nodes/generateAnswer';
+import { VectorSearchService } from '../../document/services/vector-search.service';
+import { EmbeddingService } from '../../document/services/embedding.service';
 
 export class MaintenanceGraph {
   private readonly logger = new Logger(MaintenanceGraph.name);
@@ -24,14 +29,18 @@ export class MaintenanceGraph {
   private fetchSensor: FetchSensorNode;
   private fetchPredictionFromDB: FetchPredictionFromDBNode;
   private analyzeCondition: AnalyzeConditionNode;
+  private retrieveKnowledge: RetrieveKnowledgeNode;
   private generateAnswer: GenerateAnswerNode;
 
   private apiClient: NestApiClient;
-  private llm: GeminiLLM;
+  private llm: BaseLLM;
 
   constructor(
     private prisma: PrismaService,
-    private geminiApiKey: string,
+    private apiKey: string,
+    private vectorSearch: VectorSearchService,
+    private embeddingService: EmbeddingService,
+    private provider: 'gemini' | 'groq' = 'groq',
   ) {
     this.initializeClients();
     this.initializeNodes();
@@ -39,7 +48,13 @@ export class MaintenanceGraph {
 
   private initializeClients() {
     this.apiClient = new NestApiClient(this.prisma);
-    this.llm = new GeminiLLM(this.geminiApiKey);
+    if (this.provider === 'groq') {
+      this.llm = new GroqLLM(this.apiKey);
+      this.logger.log('Initialized with Groq LLM');
+    } else {
+      this.llm = new GeminiLLM(this.apiKey);
+      this.logger.log('Initialized with Gemini LLM');
+    }
   }
 
   private initializeNodes() {
@@ -48,6 +63,10 @@ export class MaintenanceGraph {
     this.fetchSensor = new FetchSensorNode(this.apiClient);
     this.fetchPredictionFromDB = new FetchPredictionFromDBNode(this.apiClient);
     this.analyzeCondition = new AnalyzeConditionNode();
+    this.retrieveKnowledge = new RetrieveKnowledgeNode(
+      this.vectorSearch,
+      this.embeddingService,
+    );
     this.generateAnswer = new GenerateAnswerNode(this.llm);
   }
 
@@ -83,7 +102,9 @@ export class MaintenanceGraph {
       }
 
       // Route based on query_type
-      if (state.query_type === 'multi_machine') {
+      if (state.query_type === 'documentation') {
+        return await this.executeDocumentationWorkflow(state);
+      } else if (state.query_type === 'multi_machine') {
         return await this.executeMultiMachineWorkflow(state);
       } else {
         return await this.executeSingleMachineWorkflow(state);
@@ -145,14 +166,68 @@ export class MaintenanceGraph {
       this.logger.warn(`Analyze condition error: ${state.error}`);
     }
 
+    // Step 4.5: Retrieve Knowledge (RAG)
+    this.logger.log('[Step 4.5] Retrieving relevant knowledge from documents...');
+    state = {
+      ...state,
+      ...(await this.retrieveKnowledge.execute(state)),
+    };
+    if (state.knowledge_context && state.knowledge_context.length > 0) {
+      this.logger.log(
+        `Retrieved ${state.knowledge_context.length} relevant document chunks`,
+      );
+    }
+
     // Step 5: Generate Answer
-    this.logger.log('[Step 5] Generating answer...');
+    this.logger.log('[Step 5] Generating answer with knowledge context...');
     state = {
       ...state,
       ...(await this.generateAnswer.execute(state)),
     };
 
     this.logger.log('Single-machine workflow completed');
+    return state;
+  }
+
+  /**
+   * Documentation workflow (for SOP/manual queries without specific machine)
+   * Route: identify → retrieve_knowledge → generate_answer
+   */
+  private async executeDocumentationWorkflow(
+    state: MaintenanceGraphState,
+  ): Promise<MaintenanceGraphState> {
+    this.logger.log('Executing documentation workflow');
+
+    // Step 2: Retrieve Knowledge from RAG
+    this.logger.log('[Step 2] Retrieving documentation from RAG...');
+    state = {
+      ...state,
+      ...(await this.retrieveKnowledge.execute(state)),
+    };
+    if (state.knowledge_context && state.knowledge_context.length > 0) {
+      this.logger.log(
+        `Retrieved ${state.knowledge_context.length} relevant document chunks`,
+      );
+    } else {
+      this.logger.warn('No relevant documentation found');
+    }
+
+    // Step 3: Generate Answer from Documentation
+    this.logger.log('[Step 3] Generating answer from documentation...');
+    const answerResult = await this.generateAnswer.execute(state);
+    state = {
+      ...state,
+      ...answerResult,
+    };
+
+    // Debug logging
+    if (state.response) {
+      this.logger.log(`[DEBUG] Response generated: ${state.response.substring(0, 100)}...`);
+    } else {
+      this.logger.error('[DEBUG] No response in state after generateAnswer!');
+    }
+
+    this.logger.log('Documentation workflow completed');
     return state;
   }
 
