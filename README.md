@@ -17,6 +17,7 @@ Backend API untuk sistem Predictive Maintenance menggunakan NestJS, PostgreSQL, 
 ## ✨ Features
 
 ### 🔐 Authentication & Authorization
+
 - ✅ Authentication dengan Supabase (Sign Up, Sign In, Sign Out)
 - ✅ Email Verification
 - ✅ JWT Token & Refresh Token
@@ -24,18 +25,31 @@ Backend API untuk sistem Predictive Maintenance menggunakan NestJS, PostgreSQL, 
 - ✅ Role-Based Access Control (Admin, Operator, Viewer)
 
 ### 🏭 Machine Management
+
 - ✅ CRUD Operations untuk machines
 - ✅ Machine statistics (sensor readings count, predictions)
 - ✅ Filter & search machines (by type, status, location)
 - ✅ Pagination support
 
 ### 📊 Sensor Data Management
+
 - ✅ Record sensor readings (single & batch)
 - ✅ Query sensor data dengan filter (date range, machine)
 - ✅ Statistical analysis (min, max, avg, median)
 - ✅ Support untuk multiple machines
 
+### 🤖 AI-Powered Maintenance Copilot
+
+- ✅ **RAG (Retrieval Augmented Generation)** untuk dokumentasi maintenance
+- ✅ Semantic search dengan pgvector (768-dim embeddings)
+- ✅ Multi-document support (SOPs, manuals, datasheets)
+- ✅ LangGraph workflow untuk agentic behavior
+- ✅ Multi-LLM support (Gemini, Groq/GPT-OSS)
+- ✅ Source citation dengan page numbers
+- ✅ PDF preview dengan signed URLs
+
 ### 🛠 Technical Features
+
 - ✅ Input Validation dengan Zod
 - ✅ PostgreSQL dengan Prisma ORM
 - ✅ RESTful API Design
@@ -59,19 +73,21 @@ Backend API untuk sistem Predictive Maintenance menggunakan NestJS, PostgreSQL, 
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm atau yarn
 - PostgreSQL database (Supabase account)
 
 ### Installation
 
 1. **Clone repository**
+
 ```bash
 git clone <repository-url>
 cd predictive-maintenance-copilot-backend
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 ```
@@ -98,6 +114,7 @@ NODE_ENV=development
 ```
 
 4. **Setup database**
+
 ```bash
 # Generate Prisma Client
 npm run prisma:generate
@@ -109,7 +126,48 @@ npm run prisma:push
 npm run seed
 ```
 
-5. **Run aplikasi**
+5. **Setup RAG (Retrieval Augmented Generation)**
+
+   a. **Enable pgvector Extension**
+   - Go to Supabase Dashboard → Database → Extensions
+   - Search for `pgvector` and click Enable
+
+   b. **Run RAG Migration**
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
+   c. **Create Vector Similarity Index**
+
+   Run this SQL in Supabase SQL Editor (Dashboard → SQL Editor → New Query):
+
+   ```sql
+   -- Create vector similarity search index for fast semantic search
+   -- This significantly improves query performance (100x faster for large datasets)
+   CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
+   ON document_chunks USING ivfflat (embedding vector_cosine_ops)
+   WITH (lists = 100);
+   ```
+
+   **Note:**
+   - `lists = 100` is optimal for datasets with ~10K-100K vectors
+   - For larger datasets (>100K vectors), use HNSW index instead:
+     ```sql
+     CREATE INDEX idx_document_chunks_embedding
+     ON document_chunks USING hnsw (embedding vector_cosine_ops);
+     ```
+   - See full SQL setup in [`prisma/migrations/001_add_rag_documents.sql`](prisma/migrations/001_add_rag_documents.sql)
+
+   d. **Create Storage Bucket**
+   - Go to Supabase Dashboard → Storage
+   - Click "New Bucket"
+   - Name: `maintenance-documents`
+   - Set as **Private**
+   - Click Create
+
+6. **Run aplikasi**
+
 ```bash
 # Development mode dengan hot reload
 npm run start:dev
@@ -133,39 +191,39 @@ Production: https://your-domain.com
 
 ### Authentication Endpoints
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/auth/signup` | POST | ❌ | Daftar user baru |
-| `/auth/signin` | POST | ❌ | Login user |
-| `/auth/me` | GET | ✅ | Get profile user |
-| `/auth/refresh` | POST | ❌ | Refresh access token |
-| `/auth/signout` | POST | ✅ | Logout user |
-| `/auth/reset-password` | POST | ❌ | Reset password |
-| `/auth/verify-email` | GET | ❌ | Halaman verifikasi email |
-| `/auth/verify-email/callback` | POST | ❌ | Callback verifikasi email |
-| `/auth/resend-verification` | POST | ❌ | Kirim ulang email verifikasi |
+| Endpoint                      | Method | Auth | Description                  |
+| ----------------------------- | ------ | ---- | ---------------------------- |
+| `/auth/signup`                | POST   | ❌   | Daftar user baru             |
+| `/auth/signin`                | POST   | ❌   | Login user                   |
+| `/auth/me`                    | GET    | ✅   | Get profile user             |
+| `/auth/refresh`               | POST   | ❌   | Refresh access token         |
+| `/auth/signout`               | POST   | ✅   | Logout user                  |
+| `/auth/reset-password`        | POST   | ❌   | Reset password               |
+| `/auth/verify-email`          | GET    | ❌   | Halaman verifikasi email     |
+| `/auth/verify-email/callback` | POST   | ❌   | Callback verifikasi email    |
+| `/auth/resend-verification`   | POST   | ❌   | Kirim ulang email verifikasi |
 
 ### Machine Management Endpoints
 
-| Endpoint | Method | Auth | Roles | Description |
-|----------|--------|------|-------|-------------|
-| `/machines` | POST | ✅ | Admin, Operator | Create new machine |
-| `/machines` | GET | ✅ | All | Get all machines (with filters) |
-| `/machines/:id` | GET | ✅ | All | Get machine by ID |
-| `/machines/:id/stats` | GET | ✅ | All | Get machine statistics |
-| `/machines/:id` | PATCH | ✅ | Admin, Operator | Update machine |
-| `/machines/:id` | DELETE | ✅ | Admin | Delete machine |
+| Endpoint              | Method | Auth | Roles           | Description                     |
+| --------------------- | ------ | ---- | --------------- | ------------------------------- |
+| `/machines`           | POST   | ✅   | Admin, Operator | Create new machine              |
+| `/machines`           | GET    | ✅   | All             | Get all machines (with filters) |
+| `/machines/:id`       | GET    | ✅   | All             | Get machine by ID               |
+| `/machines/:id/stats` | GET    | ✅   | All             | Get machine statistics          |
+| `/machines/:id`       | PATCH  | ✅   | Admin, Operator | Update machine                  |
+| `/machines/:id`       | DELETE | ✅   | Admin           | Delete machine                  |
 
 ### Sensors Endpoints
 
-| Endpoint | Method | Auth | Roles | Description |
-|----------|--------|------|-------|-------------|
-| `/sensors` | POST | ✅ | Admin, Operator | Create sensor reading |
-| `/sensors/batch` | POST | ✅ | Admin, Operator | Create multiple sensor readings |
-| `/sensors` | GET | ✅ | All | Get sensor readings (with filters) |
-| `/sensors/:udi` | GET | ✅ | All | Get sensor reading by UDI |
-| `/sensors/statistics/:machineId` | GET | ✅ | All | Get sensor statistics for machine |
-| `/sensors/:udi` | DELETE | ✅ | Admin | Delete sensor reading |
+| Endpoint                         | Method | Auth | Roles           | Description                        |
+| -------------------------------- | ------ | ---- | --------------- | ---------------------------------- |
+| `/sensors`                       | POST   | ✅   | Admin, Operator | Create sensor reading              |
+| `/sensors/batch`                 | POST   | ✅   | Admin, Operator | Create multiple sensor readings    |
+| `/sensors`                       | GET    | ✅   | All             | Get sensor readings (with filters) |
+| `/sensors/:udi`                  | GET    | ✅   | All             | Get sensor reading by UDI          |
+| `/sensors/statistics/:machineId` | GET    | ✅   | All             | Get sensor statistics for machine  |
+| `/sensors/:udi`                  | DELETE | ✅   | Admin           | Delete sensor reading              |
 
 ### Example Usage
 
@@ -184,6 +242,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "message": "User created successfully. Please check your email to verify your account.",
@@ -214,6 +273,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Sign in successful",
@@ -251,6 +311,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid",
@@ -270,6 +331,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -313,6 +375,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "udi": 123,
@@ -335,6 +398,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "machineId": "uuid",
@@ -382,6 +446,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -403,6 +468,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Sign out successful"
@@ -424,6 +490,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ### Models
 
 #### User
+
 - `id` - Primary key
 - `supabaseId` - Supabase user ID
 - `email` - Email (unique)
@@ -432,6 +499,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `isActive` - Account status
 
 #### Machine
+
 - `id` - Primary key (UUID)
 - `productId` - Product identifier (unique)
 - `type` - Machine type (L, M, H)
@@ -443,6 +511,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `status` - Status (operational, maintenance, offline, retired)
 
 #### SensorData
+
 - `udi` - Primary key (auto-increment)
 - `machineId` - Foreign key to Machine
 - `productId` - Product identifier
@@ -454,6 +523,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `timestamp` - Reading timestamp
 
 #### PredictionResult
+
 - `id` - Primary key (UUID)
 - `machineId` - Foreign key to Machine
 - `riskScore` - Risk score (0-1)
@@ -476,18 +546,18 @@ Ini akan membuat sample data untuk testing API
 
 ## 🔧 Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run start` | Run aplikasi (production) |
-| `npm run start:dev` | Run dengan hot reload |
-| `npm run start:prod` | Run production build |
-| `npm run build` | Build aplikasi |
-| `npm run lint` | Check code linting |
-| `npm run test` | Run unit tests |
-| `npm run prisma:generate` | Generate Prisma Client |
-| `npm run prisma:push` | Push schema ke database |
-| `npm run prisma:studio` | Buka Prisma Studio |
-| `npm run seed` | Seed sample data |
+| Command                   | Description               |
+| ------------------------- | ------------------------- |
+| `npm run start`           | Run aplikasi (production) |
+| `npm run start:dev`       | Run dengan hot reload     |
+| `npm run start:prod`      | Run production build      |
+| `npm run build`           | Build aplikasi            |
+| `npm run lint`            | Check code linting        |
+| `npm run test`            | Run unit tests            |
+| `npm run prisma:generate` | Generate Prisma Client    |
+| `npm run prisma:push`     | Push schema ke database   |
+| `npm run prisma:studio`   | Buka Prisma Studio        |
+| `npm run seed`            | Seed sample data          |
 
 ## 📁 Project Structure
 
@@ -543,7 +613,8 @@ predictive-maintenance-copilot-backend/
 
 **Penyebab:** Email belum diverifikasi atau password salah
 
-**Solusi:** 
+**Solusi:**
+
 1. Pastikan email sudah diverifikasi (cek inbox)
 2. Klik link verifikasi di email
 3. Coba login lagi
@@ -558,6 +629,7 @@ predictive-maintenance-copilot-backend/
 ### 📧 Email verifikasi tidak sampai
 
 **Solusi:**
+
 1. Cek spam/junk folder
 2. Gunakan endpoint `/auth/resend-verification` untuk kirim ulang
 3. Pastikan Supabase email service sudah configured
@@ -565,6 +637,7 @@ predictive-maintenance-copilot-backend/
 ### 🔧 Database connection error
 
 **Solusi:**
+
 1. Pastikan `DATABASE_URL` dan `DIRECT_URL` sudah benar di `.env`
 2. Check koneksi ke Supabase
 3. Jalankan `npm run prisma:generate` dan `npm run prisma:push`
@@ -580,6 +653,7 @@ Dokumentasi lengkap tentang API endpoints, error handling, dan integration guide
 👉 **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**
 
 Berisi:
+
 - Complete authentication flow
 - Semua API endpoints dengan request/response format
 - Error codes dan handling
@@ -597,6 +671,7 @@ Contributions welcome! Silakan buat issue atau pull request.
 ## 📞 Support
 
 Jika ada pertanyaan atau masalah:
+
 1. Baca [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) terlebih dahulu
 2. Test dengan Postman collection
 3. Check browser console dan network tab

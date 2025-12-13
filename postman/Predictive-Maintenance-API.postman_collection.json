@@ -1337,6 +1337,138 @@
         }
       ],
       "description": "User management endpoints. Admin role required for all operations."
+    },
+    {
+      "name": "RAG Documents",
+      "item": [
+        {
+          "name": "Upload Document (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('documentId', jsonData.id);",
+                  "    pm.environment.set('documentFilename', jsonData.filename);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "PDF file to upload (max 50MB)"
+                },
+                {
+                  "key": "type",
+                  "value": "sop",
+                  "type": "text",
+                  "description": "Document type: sop, manual, datasheet, safety, maintenance_record"
+                },
+                {
+                  "key": "language",
+                  "value": "id",
+                  "type": "text",
+                  "description": "Language: id or en"
+                },
+                {
+                  "key": "metadata",
+                  "value": "{\"description\": \"SOP Perbaikan Heat Dissipation\", \"version\": \"2.0\"}",
+                  "type": "text",
+                  "description": "Optional JSON metadata"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "upload"]
+            },
+            "description": "Upload PDF document for RAG system. Admin only. File will be processed, chunked, and embedded automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "List All Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "type",
+                  "value": "sop",
+                  "disabled": true,
+                  "description": "Filter by document type"
+                },
+                {
+                  "key": "language",
+                  "value": "id",
+                  "disabled": true,
+                  "description": "Filter by language"
+                }
+              ]
+            },
+            "description": "Get list of all uploaded documents with optional filters. Each document includes previewUrl field (signed URL, 1 hour expiry) for viewing PDF directly in browser."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Document (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}"]
+            },
+            "description": "Delete document and all associated chunks. Admin only. Also removes file from storage."
+          },
+          "response": []
+        }
+      ],
+      "description": "RAG (Retrieval Augmented Generation) document management. Upload PDFs, perform semantic search, and manage knowledge base for AI-powered maintenance assistance."
     }
   ],
   "variable": [
@@ -1349,6 +1481,12 @@
       "key": "maintenanceTicketId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "",
+      "type": "string",
+      "description": "RAG Document ID (auto-set after upload)"
     }
   ]
 }
