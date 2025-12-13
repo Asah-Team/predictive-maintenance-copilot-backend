@@ -50,13 +50,13 @@ export class DocumentService {
       const filename = `${timestamp}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
       // 2. Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } =
-        await this.supabase.getAdminClient().storage
-          .from(this.storageBucket)
-          .upload(filename, file.buffer, {
-            contentType: file.mimetype,
-            upsert: false,
-          });
+      const { error: uploadError } = await this.supabase
+        .getAdminClient()
+        .storage.from(this.storageBucket)
+        .upload(filename, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
 
       if (uploadError) {
         throw new Error(`Storage upload failed: ${uploadError.message}`);
@@ -65,8 +65,7 @@ export class DocumentService {
       this.logger.log(`File uploaded to storage: ${filename}`);
 
       // 3. Process PDF
-      const chunkSize =
-        this.configService.get<number>('RAG_CHUNK_SIZE') || 500;
+      const chunkSize = this.configService.get<number>('RAG_CHUNK_SIZE') || 500;
       const chunkOverlap =
         this.configService.get<number>('RAG_CHUNK_OVERLAP') || 50;
 
@@ -76,13 +75,14 @@ export class DocumentService {
         chunkOverlap,
       );
 
-      this.logger.log(`PDF processed: ${chunks.length} chunks, ${pageCount} pages`);
+      this.logger.log(
+        `PDF processed: ${chunks.length} chunks, ${pageCount} pages`,
+      );
 
       // 4. Generate embeddings for all chunks
       const chunkTexts = chunks.map((c) => c.content);
-      const embeddings = await this.embeddingService.generateEmbeddingsBatch(
-        chunkTexts,
-      );
+      const embeddings =
+        await this.embeddingService.generateEmbeddingsBatch(chunkTexts);
 
       this.logger.log(`Generated ${embeddings.length} embeddings`);
 
@@ -106,7 +106,7 @@ export class DocumentService {
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
           const embeddingString = `[${embeddings[i].join(',')}]`;
-          
+
           await tx.$executeRawUnsafe(
             `
             INSERT INTO document_chunks (
@@ -169,9 +169,7 @@ export class DocumentService {
   /**
    * Search documents using semantic search
    */
-  async searchDocuments(
-    dto: SearchDocumentDto,
-  ): Promise<SearchResponseDto> {
+  async searchDocuments(dto: SearchDocumentDto): Promise<SearchResponseDto> {
     this.logger.log(`Searching documents with query: "${dto.query}"`);
 
     try {
@@ -227,8 +225,9 @@ export class DocumentService {
     // Generate preview URLs for all documents
     const documentsWithPreview: DocumentResponseDto[] = await Promise.all(
       documents.map(async (doc) => {
-        const { data } = await this.supabase.getClient().storage
-          .from(this.storageBucket)
+        const { data } = await this.supabase
+          .getClient()
+          .storage.from(this.storageBucket)
           .createSignedUrl(doc.filename, 3600);
 
         return {
@@ -273,8 +272,9 @@ export class DocumentService {
     }
 
     // Delete from storage
-    const { error: deleteError } = await this.supabase.getAdminClient().storage
-      .from(this.storageBucket)
+    const { error: deleteError } = await this.supabase
+      .getAdminClient()
+      .storage.from(this.storageBucket)
       .remove([document.filename]);
 
     if (deleteError) {

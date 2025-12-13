@@ -56,7 +56,9 @@ export class VectorSearchService {
       }
 
       const whereClause =
-        whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
+        whereConditions.length > 0
+          ? `AND ${whereConditions.join(' AND ')}`
+          : '';
 
       // Raw SQL query using pgvector
       const query = `
@@ -79,12 +81,13 @@ export class VectorSearchService {
       `;
 
       this.logger.debug(`Executing vector search with limit ${limit}`);
-      const results = await this.prisma.$queryRawUnsafe<any[]>(query, ...params);
+      const results = await this.prisma.$queryRawUnsafe<any[]>(
+        query,
+        ...params,
+      );
 
       // Filter by similarity threshold
-      const filteredResults = results.filter(
-        (r) => r.similarity >= threshold,
-      );
+      const filteredResults = results.filter((r) => r.similarity >= threshold);
 
       this.logger.log(
         `Found ${filteredResults.length}/${results.length} chunks above threshold ${threshold}`,

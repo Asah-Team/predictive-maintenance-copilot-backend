@@ -49,7 +49,7 @@ export class PdfProcessorService {
     overlap: number = 50,
   ): PdfChunk[] {
     const chunks: PdfChunk[] = [];
-    
+
     // Split by double newlines (paragraphs)
     const paragraphs = text
       .split(/\n\n+/)
@@ -80,14 +80,14 @@ export class PdfProcessorService {
         const sentences = paragraph.split(/[.!?]+/).filter((s) => s.trim());
         for (const sentence of sentences) {
           const sentenceTokens = this.countTokens(sentence);
-          
+
           if (currentTokens + sentenceTokens > chunkSize && currentChunk) {
             chunks.push({
               content: currentChunk.trim(),
               pageNumber: null,
               chunkIndex: chunkIndex++,
             });
-            
+
             // Keep overlap
             const words = currentChunk.split(' ');
             const overlapWords = words.slice(-Math.floor(overlap / 5)); // Rough estimate
@@ -139,7 +139,7 @@ export class PdfProcessorService {
     try {
       const tokens = this.encoding.encode(text);
       return tokens.length;
-    } catch (error) {
+    } catch {
       // Fallback: rough estimate (1 token ≈ 4 characters)
       return Math.ceil(text.length / 4);
     }

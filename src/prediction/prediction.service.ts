@@ -86,10 +86,7 @@ export class PredictionService {
           },
         },
       },
-      orderBy: [
-        { riskScore: 'desc' },
-        { timestamp: 'desc' },
-      ],
+      orderBy: [{ riskScore: 'desc' }, { timestamp: 'desc' }],
       take: limit,
     });
   }
@@ -143,27 +140,22 @@ export class PredictionService {
   }
 
   async getStatistics() {
-    const [
-      total,
-      highRisk,
-      failurePredicted,
-      anomalies,
-      avgRiskScore,
-    ] = await Promise.all([
-      this.prisma.predictionResult.count(),
-      this.prisma.predictionResult.count({
-        where: { riskScore: { gte: 0.7 } },
-      }),
-      this.prisma.predictionResult.count({
-        where: { failurePredicted: true },
-      }),
-      this.prisma.predictionResult.count({
-        where: { anomalyDetected: true },
-      }),
-      this.prisma.predictionResult.aggregate({
-        _avg: { riskScore: true },
-      }),
-    ]);
+    const [total, highRisk, failurePredicted, anomalies, avgRiskScore] =
+      await Promise.all([
+        this.prisma.predictionResult.count(),
+        this.prisma.predictionResult.count({
+          where: { riskScore: { gte: 0.7 } },
+        }),
+        this.prisma.predictionResult.count({
+          where: { failurePredicted: true },
+        }),
+        this.prisma.predictionResult.count({
+          where: { anomalyDetected: true },
+        }),
+        this.prisma.predictionResult.aggregate({
+          _avg: { riskScore: true },
+        }),
+      ]);
 
     return {
       total,
