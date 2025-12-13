@@ -167,7 +167,9 @@ export class MaintenanceGraph {
     }
 
     // Step 4.5: Retrieve Knowledge (RAG)
-    this.logger.log('[Step 4.5] Retrieving relevant knowledge from documents...');
+    this.logger.log(
+      '[Step 4.5] Retrieving relevant knowledge from documents...',
+    );
     state = {
       ...state,
       ...(await this.retrieveKnowledge.execute(state)),
@@ -222,7 +224,9 @@ export class MaintenanceGraph {
 
     // Debug logging
     if (state.response) {
-      this.logger.log(`[DEBUG] Response generated: ${state.response.substring(0, 100)}...`);
+      this.logger.log(
+        `[DEBUG] Response generated: ${state.response.substring(0, 100)}...`,
+      );
     } else {
       this.logger.error('[DEBUG] No response in state after generateAnswer!');
     }
