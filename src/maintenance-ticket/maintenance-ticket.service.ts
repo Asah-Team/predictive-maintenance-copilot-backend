@@ -5,7 +5,7 @@ import { UpdateMaintenanceTicketDto } from './dto/update-maintenance-ticket.dto'
 
 @Injectable()
 export class MaintenanceTicketService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(
     createMaintenanceTicketDto: CreateMaintenanceTicketDto,
@@ -77,10 +77,31 @@ export class MaintenanceTicketService {
     id: string,
     updateMaintenanceTicketDto: UpdateMaintenanceTicketDto,
   ) {
-    return this.prisma.maintenanceTicket.update({
+    const ticket = await this.prisma.maintenanceTicket.update({
       where: { id },
       data: updateMaintenanceTicketDto,
     });
+
+    if (updateMaintenanceTicketDto.status === 'closed') {
+      const latestPrediction = await this.prisma.predictionResult.findFirst({
+        where: { machineId: ticket.machineId },
+        orderBy: { timestamp: 'desc' },
+      });
+
+      if (latestPrediction) {
+        await this.prisma.predictionResult.update({
+          where: { id: latestPrediction.id },
+          data: {
+            failurePredicted: false,
+            anomalyDetected: false,
+            riskScore: 0,
+            failureType: null,
+          },
+        });
+      }
+    }
+
+    return ticket;
   }
 
   async cancel(id: string) {
