@@ -96,6 +96,7 @@ export class MaintenanceTicketService {
             anomalyDetected: false,
             riskScore: 0,
             failureType: null,
+            predictedFailureTime: null,
           },
         });
       }
