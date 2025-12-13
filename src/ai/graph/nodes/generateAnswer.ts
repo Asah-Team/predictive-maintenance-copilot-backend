@@ -103,21 +103,33 @@ export class GenerateAnswerNode {
     // Handle documentation query scenario
     if (state.query_type === 'documentation') {
       parts.push(`=== DOCUMENTATION QUERY ===`);
-      parts.push(`User is asking for general information/procedures, not analyzing a specific machine.`);
-      
+      parts.push(
+        `User is asking for general information/procedures, not analyzing a specific machine.`,
+      );
+
       if (state.documentation_filters?.machineType) {
-        parts.push(`Machine Type Filter: Type ${state.documentation_filters.machineType} machines`);
+        parts.push(
+          `Machine Type Filter: Type ${state.documentation_filters.machineType} machines`,
+        );
       }
-      
+
       // If no relevant documents found, provide general guidance
       if (!state.knowledge_context || state.knowledge_context.length === 0) {
-        parts.push(`\nNote: No specific SOP documents were found in the database.`);
-        parts.push(`Please provide general best practices and recommendations based on your knowledge of:`);
-        parts.push(`- Preventive maintenance procedures for industrial machines`);
+        parts.push(
+          `\nNote: No specific SOP documents were found in the database.`,
+        );
+        parts.push(
+          `Please provide general best practices and recommendations based on your knowledge of:`,
+        );
+        parts.push(
+          `- Preventive maintenance procedures for industrial machines`,
+        );
         parts.push(`- Common maintenance schedules and checklists`);
         parts.push(`- Safety protocols and inspection steps`);
         if (state.documentation_filters?.machineType) {
-          parts.push(`- Specific considerations for Type ${state.documentation_filters.machineType} quality variant machines`);
+          parts.push(
+            `- Specific considerations for Type ${state.documentation_filters.machineType} quality variant machines`,
+          );
         }
       }
     }
@@ -231,7 +243,9 @@ export class GenerateAnswerNode {
 
       for (let i = 0; i < state.knowledge_context.length; i++) {
         const doc = state.knowledge_context[i];
-        parts.push(`\n[Document ${i + 1}] ${doc.source}${doc.pageNumber ? ` (Page ${doc.pageNumber})` : ''}`);
+        parts.push(
+          `\n[Document ${i + 1}] ${doc.source}${doc.pageNumber ? ` (Page ${doc.pageNumber})` : ''}`,
+        );
         parts.push(`Relevance: ${(doc.similarity * 100).toFixed(1)}%`);
         parts.push(`Content:\n${doc.content}\n`);
       }

@@ -37,7 +37,9 @@ export class IdentifyMachineNode {
       /** 0) FAST PATH: Pattern-based documentation detection (skip LLM for common patterns) */
       const fastDocCheck = this.fastDocumentationCheck(input);
       if (fastDocCheck) {
-        this.logger.log('[FAST PATH] Documentation query detected via pattern matching');
+        this.logger.log(
+          '[FAST PATH] Documentation query detected via pattern matching',
+        );
         return {
           query_type: 'documentation',
           documentation_filters: {
@@ -54,7 +56,9 @@ export class IdentifyMachineNode {
 
       /** DOCUMENTATION QUERY */
       if (parsed.isDocumentationQuery) {
-        this.logger.log('[DEBUG] Documentation query detected - skipping machine lookup');
+        this.logger.log(
+          '[DEBUG] Documentation query detected - skipping machine lookup',
+        );
         return {
           query_type: 'documentation',
           documentation_filters: {
@@ -170,9 +174,11 @@ export class IdentifyMachineNode {
   }
 
   /** 0) FAST PATH: Pattern-based documentation detection */
-  private fastDocumentationCheck(input: string): { machineType?: string } | null {
+  private fastDocumentationCheck(
+    input: string,
+  ): { machineType?: string } | null {
     const lowerInput = input.toLowerCase();
-    
+
     // Keywords that indicate documentation/SOP queries
     const docKeywords = [
       'prosedur',
@@ -193,28 +199,31 @@ export class IdentifyMachineNode {
       'preventive maintenance',
       'perawatan preventif',
     ];
-    
+
     // Check if input contains documentation keywords
-    const hasDocKeyword = docKeywords.some(keyword => lowerInput.includes(keyword));
-    
+    const hasDocKeyword = docKeywords.some((keyword) =>
+      lowerInput.includes(keyword),
+    );
+
     if (!hasDocKeyword) {
       return null; // Not a documentation query
     }
-    
+
     // Check if it mentions specific machine identifiers (Product ID, location, name)
     // If it has specific identifiers, it's likely asking about a specific machine
     const hasProductId = /\b[LMH]\d{5}\b/i.test(input); // Pattern like L12345, M54321, H98765
     const hasLocation = /lantai|floor|area|ruang|zone|lokasi/i.test(lowerInput);
     const hasMachineName = /mesin\s+[A-Z0-9-]+\b/i.test(input); // "mesin ABC-123"
-    
+
     if (hasProductId || hasLocation || hasMachineName) {
       return null; // Has specific identifiers, let LLM handle it
     }
-    
+
     // Extract machine type if mentioned (tipe H, type L, etc.)
-    const typeMatch = input.match(/tipe?\s*([LMH])\b/i) || input.match(/type\s*([LMH])\b/i);
+    const typeMatch =
+      input.match(/tipe?\s*([LMH])\b/i) || input.match(/type\s*([LMH])\b/i);
     const machineType = typeMatch ? typeMatch[1].toUpperCase() : undefined;
-    
+
     return { machineType };
   }
 

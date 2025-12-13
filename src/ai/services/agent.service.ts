@@ -26,7 +26,8 @@ export class AiAgentService {
   }
 
   private initializeGraph() {
-    const llmProvider = this.configService.get<string>('LLM_PROVIDER') || 'groq';
+    const llmProvider =
+      this.configService.get<string>('LLM_PROVIDER') || 'groq';
     let apiKey: string;
     if (llmProvider === 'groq') {
       const groqKey = this.configService.get<string>('GROQ_API_KEY');
