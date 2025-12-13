@@ -15,7 +15,7 @@ import { SensorsModule } from './sensors/sensors.module';
 import { MaintenanceTicketModule } from './maintenance-ticket/maintenance-ticket.module';
 import { ChatModule } from './chat/chat.module';
 import { PredictionModule } from './prediction/prediction.module';
-
+import { DocumentModule } from './document/document.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,6 +34,7 @@ import { PredictionModule } from './prediction/prediction.module';
     ChatModule,
     MaintenanceTicketModule,
     PredictionModule,
+    DocumentModule,
   ],
   controllers: [AppController],
   providers: [

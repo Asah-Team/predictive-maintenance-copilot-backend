@@ -35,8 +35,33 @@ export class ChatService {
         },
       });
 
-      // Get AI response
-      const aiResponseData = await this.aiAgent.chat(dto.message, []);
+      // 🆕 Fetch recent conversation history (last 10 messages)
+      const recentMessages = await this.prisma.chatMessage.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 10, // Last 10 messages for context
+        select: {
+          role: true,
+          content: true,
+          createdAt: true,
+        },
+      });
+
+      // Reverse to chronological order (oldest first)
+      const conversationHistory = recentMessages.reverse().map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      this.logger.log(
+        `Loaded ${conversationHistory.length} messages for conversation context`,
+      );
+
+      // Get AI response with conversation history
+      const aiResponseData = await this.aiAgent.chat(
+        dto.message,
+        conversationHistory,
+      );
 
       // Save AI response to database
       await this.prisma.chatMessage.create({
