@@ -87,8 +87,15 @@ export class DocumentController {
    */
   @Delete(':id')
   @Roles('admin')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteDocument(@Param('id') id: string): Promise<void> {
+  @HttpCode(HttpStatus.OK)
+  async deleteDocument(@Param('id') id: string): Promise<{
+    message: string;
+    deletedDocument: {
+      id: string;
+      filename: string;
+      originalName: string;
+    };
+  }> {
     return this.documentService.deleteDocument(id);
   }
 }

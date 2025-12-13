@@ -262,7 +262,14 @@ export class DocumentService {
   /**
    * Delete document (Admin only)
    */
-  async deleteDocument(id: string): Promise<void> {
+  async deleteDocument(id: string): Promise<{
+    message: string;
+    deletedDocument: {
+      id: string;
+      filename: string;
+      originalName: string;
+    };
+  }> {
     const document = await this.prisma.document.findUnique({
       where: { id },
     });
@@ -289,5 +296,14 @@ export class DocumentService {
     });
 
     this.logger.log(`Document deleted: ${id}`);
+
+    return {
+      message: 'Document deleted successfully',
+      deletedDocument: {
+        id: document.id,
+        filename: document.filename,
+        originalName: document.originalName,
+      },
+    };
   }
 }
